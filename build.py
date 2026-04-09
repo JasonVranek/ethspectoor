@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Ethereum Specs Index builder. Orchestrates extraction, enrichment, and
-optional example fetching for one or more spec repos.
+The Inspectoor -- Ethereum Specs Index builder.
+
+Orchestrates extraction, enrichment, and optional example fetching
+for one or more spec repos.
 
 Usage:
     python3 build.py --profile builder-specs --repo-dir /path/to/builder-specs
     python3 build.py --profile consensus-specs --repo-dir /path/to/consensus-specs
-    python3 build.py --profile builder-specs --repo-dir /path/to/builder-specs --skip-enrich
 """
 
 import argparse
@@ -15,22 +16,18 @@ import os
 import sys
 from pathlib import Path
 
-# Add extractors to path
 sys.path.insert(0, str(Path(__file__).parent / "extractors"))
 
 from profiles import get_profile
 from extract_markdown import extract_all, build_output
-from extract_openapi import extract_endpoints
+from extract_openapi import extract_endpoints, extract_type_schemas
 from enrich import enrich
 
 
 def build(profile_name: str, repo_dir: str, branch: str = "main",
           output_dir: str = "./indexes", skip_enrich: bool = False,
           skip_examples: bool = True) -> str:
-    """Build a complete spec index for one repo.
 
-    Returns the output file path.
-    """
     profile = get_profile(profile_name)
     output_path = os.path.join(output_dir, f"{profile.name}_index.json")
 
@@ -40,29 +37,111 @@ def build(profile_name: str, repo_dir: str, branch: str = "main",
     print(f"  Repo dir: {repo_dir}", file=sys.stderr)
     print(f"{'='*60}\n", file=sys.stderr)
 
-    # Step 1: Extract markdown definitions
-    print("Step 1: Extracting markdown definitions...", file=sys.stderr)
-    items, constants, type_aliases, files_processed, fork_order, features = extract_all(
-        profile=profile,
-        repo_dir=repo_dir,
-        branch=branch,
-    )
+    is_pure_openapi = profile.source_format == "openapi"
 
-    # Step 2: Build base output
-    print("\nStep 2: Building output structure...", file=sys.stderr)
-    output = build_output(
-        profile, items, constants, type_aliases,
-        files_processed, fork_order, features, branch
-    )
+    if is_pure_openapi:
+        # Pure OpenAPI profile (e.g., beacon-APIs): extract types from YAML schemas
+        print("Step 1: Extracting type schemas from OpenAPI...", file=sys.stderr)
+        type_schema_items = extract_type_schemas(profile, repo_dir, branch)
 
-    # Step 3: Enrich (fields, signatures, references, EIPs)
-    if not skip_enrich:
-        print("\nStep 3: Enriching...", file=sys.stderr)
-        output = enrich(output)
+        # Detect fork order from the type schema items
+        forks_seen = set()
+        for item in type_schema_items.values():
+            forks_seen.update(item["forks"].keys())
+        fork_order = [f for f in profile.default_fork_order if f in forks_seen]
+
+        # Build type_map
+        type_map = {}
+        for name, item in type_schema_items.items():
+            type_map[name] = {
+                "source": profile.repo,
+                "introduced": item["introduced"],
+                "kind": "class",
+            }
+
+        # Build domains
+        domain_items = {}
+        for name, item in type_schema_items.items():
+            d = item["domain"]
+            if d not in domain_items:
+                domain_items[d] = {"classes": [], "functions": [], "other": []}
+            domain_items[d]["classes"].append(name)
+
+        # Build fork summary
+        fork_summary = {}
+        for fork in fork_order:
+            new_items = [n for n, it in type_schema_items.items() if it["introduced"] == fork]
+            modified_items = [n for n, it in type_schema_items.items()
+                             if fork in it["forks"] and it["introduced"] != fork]
+            if new_items or modified_items:
+                fork_summary[fork] = {
+                    "new": sorted(new_items),
+                    "modified": sorted(modified_items),
+                    "total_definitions": len(new_items) + len(modified_items),
+                }
+
+        # Build reverse references
+        ref_index = {}
+        for name, item in type_schema_items.items():
+            for fork_data in item["forks"].values():
+                for ref in fork_data.get("references", []):
+                    if ref not in ref_index:
+                        ref_index[ref] = set()
+                    ref_index[ref].add(name)
+
+        output = {
+            "_meta": {
+                "schema_version": "1.0.0",
+                "generated_by": "extract_openapi.py",
+                "source": profile.repo,
+                "source_format": profile.source_format,
+                "branch": branch,
+                "fork_order": fork_order,
+                "features": [],
+                "files_processed": [],
+                "total_items": len(type_schema_items),
+                "total_constants": 0,
+                "total_type_aliases": 0,
+            },
+            "domains": {
+                domain: {
+                    "classes": sorted(info["classes"]),
+                    "functions": sorted(info["functions"]),
+                    "other": sorted(info["other"]),
+                }
+                for domain, info in sorted(domain_items.items())
+            },
+            "fork_summary": fork_summary,
+            "items": {name: item for name, item in sorted(type_schema_items.items())},
+            "constants": {},
+            "type_aliases": {},
+            "_type_map": type_map,
+            "_references": {k: sorted(v) for k, v in sorted(ref_index.items())},
+        }
+
+        print(f"\nStep 2: Extracted {len(type_schema_items)} types", file=sys.stderr)
+        print("\nStep 3: Skipping markdown enrichment (pure OpenAPI)", file=sys.stderr)
+
     else:
-        print("\nStep 3: Skipping enrichment", file=sys.stderr)
+        # Standard markdown+optional OpenAPI profile
+        print("Step 1: Extracting markdown definitions...", file=sys.stderr)
+        items, constants, type_aliases, files_processed, fork_order, features = extract_all(
+            profile=profile, repo_dir=repo_dir, branch=branch,
+        )
 
-    # Step 4: Extract OpenAPI endpoints
+        print("\nStep 2: Building output structure...", file=sys.stderr)
+        output = build_output(
+            profile, items, constants, type_aliases,
+            files_processed, fork_order, features, branch
+        )
+
+        if not skip_enrich:
+            print("\nStep 3: Enriching...", file=sys.stderr)
+            output = enrich(output)
+        else:
+            print("\nStep 3: Skipping enrichment", file=sys.stderr)
+
+    # Step 4: Extract OpenAPI endpoints (both modes)
     if profile.openapi_file:
         print("\nStep 4: Extracting OpenAPI endpoints...", file=sys.stderr)
         endpoints = extract_endpoints(profile, repo_dir, branch)
@@ -84,7 +163,7 @@ def build(profile_name: str, repo_dir: str, branch: str = "main",
     print(f"  Constants: {output['_meta']['total_constants']}", file=sys.stderr)
     print(f"  Type aliases: {output['_meta']['total_type_aliases']}", file=sys.stderr)
     print(f"  Endpoints: {len(output.get('endpoints', {}))}", file=sys.stderr)
-    if not skip_enrich:
+    if not is_pure_openapi and not skip_enrich:
         print(f"  References: {output['_meta'].get('total_references', 'N/A')}", file=sys.stderr)
         print(f"  EIPs: {output['_meta'].get('total_eips', 'N/A')}", file=sys.stderr)
     print(f"  Output: {output_path}", file=sys.stderr)
@@ -94,28 +173,14 @@ def build(profile_name: str, repo_dir: str, branch: str = "main",
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Build Ethereum spec indexes",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  python3 build.py --profile builder-specs --repo-dir ./repos/specs/builder-specs
-  python3 build.py --profile consensus-specs --repo-dir ./repos/specs/consensus-specs
-  python3 build.py --profile relay-specs --repo-dir ./repos/specs/relay-specs
-        """
-    )
+    parser = argparse.ArgumentParser(description="The Inspectoor -- build Ethereum spec indexes")
     parser.add_argument("--profile", required=True,
-                        help="Spec profile (consensus-specs, builder-specs, relay-specs)")
-    parser.add_argument("--repo-dir", required=True,
-                        help="Path to local repo clone")
-    parser.add_argument("--output-dir", default="./indexes",
-                        help="Output directory (default: ./indexes)")
-    parser.add_argument("--branch", default="main",
-                        help="Git branch for GitHub URLs (default: main)")
-    parser.add_argument("--skip-enrich", action="store_true",
-                        help="Skip enrichment pass")
-    parser.add_argument("--skip-examples", action="store_true", default=True,
-                        help="Skip fetching test fixture examples")
+                        help="Spec profile (consensus-specs, builder-specs, relay-specs, beacon-apis)")
+    parser.add_argument("--repo-dir", required=True, help="Path to local repo clone")
+    parser.add_argument("--output-dir", default="./indexes", help="Output directory")
+    parser.add_argument("--branch", default="main", help="Git branch for GitHub URLs")
+    parser.add_argument("--skip-enrich", action="store_true", help="Skip enrichment pass")
+    parser.add_argument("--skip-examples", action="store_true", default=True)
     args = parser.parse_args()
 
     build(

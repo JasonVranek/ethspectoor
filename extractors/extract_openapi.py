@@ -365,6 +365,122 @@ def extract_endpoints(profile: SpecProfile, repo_dir: str, branch: str = "main")
 
 # ── CLI ────────────────────────────────────────────────────────────────────
 
+def extract_type_schemas(profile: SpecProfile, repo_dir: str, branch: str = "main") -> dict:
+    """Extract type schemas from OpenAPI type directories (beacon-APIs style).
+
+    Returns items dict compatible with the unified schema.
+    """
+    repo_path = Path(repo_dir)
+    types_dir = repo_path / "types"
+
+    if not types_dir.is_dir():
+        return {}
+
+    print(f"  Extracting type schemas from types/...", file=sys.stderr)
+
+    items = {}
+    fork_dirs = sorted([
+        d.name for d in types_dir.iterdir()
+        if d.is_dir() and not d.name.startswith(("_", "."))
+    ])
+
+    for fork in fork_dirs:
+        fork_dir = types_dir / fork
+        for yaml_file in sorted(fork_dir.glob("*.yaml")):
+            data = load_yaml(yaml_file)
+            if not data or not isinstance(data, dict):
+                continue
+
+            for namespace, type_defs in data.items():
+                if not isinstance(type_defs, dict):
+                    continue
+                for type_name, schema in type_defs.items():
+                    if not isinstance(schema, dict):
+                        continue
+
+                    full_name = type_name
+                    file_path = f"types/{fork}/{yaml_file.name}"
+                    github_base = profile.github_web.format(branch=branch)
+                    github_url = f"{github_base}/{file_path}"
+
+                    # Extract fields from properties
+                    fields = []
+                    if "properties" in schema:
+                        for fname, fschema in schema["properties"].items():
+                            ftype = extract_type_from_schema(fschema) if isinstance(fschema, dict) else str(fschema)
+                            fields.append({
+                                "name": fname,
+                                "type": ftype,
+                                "description": fschema.get("description", "") if isinstance(fschema, dict) else "",
+                            })
+
+                    # Domain from file name
+                    domain_map = {
+                        "state": "beacon-state", "block": "block-processing",
+                        "attestation": "block-processing", "validator": "validator",
+                        "eth1": "deposit", "deposit": "deposit",
+                        "light_client": "light-client", "execution_payload": "execution",
+                        "execution_requests": "execution", "consolidation": "block-processing",
+                        "block_contents": "block-processing",
+                    }
+                    domain = "other"
+                    for key, val in domain_map.items():
+                        if key in yaml_file.stem:
+                            domain = val
+                            break
+
+                    fork_data = {
+                        "fork": fork,
+                        "file": file_path,
+                        "line_number": 1,
+                        "kind": "class",
+                        "is_new": full_name not in items,
+                        "is_modified": full_name in items,
+                        "code": "",
+                        "fields": fields,
+                        "github_url": github_url,
+                        "description": schema.get("description", ""),
+                        "section_path": [namespace],
+                        "inline_comments": [],
+                        "references": [],
+                    }
+
+                    # Extract references from $ref
+                    refs = set()
+                    if "properties" in schema:
+                        for fschema in schema["properties"].values():
+                            if isinstance(fschema, dict):
+                                if "$ref" in fschema:
+                                    ref_name = extract_schema_name(fschema["$ref"])
+                                    if "." in ref_name:
+                                        ref_name = ref_name.split(".")[-1]
+                                    refs.add(ref_name)
+                                if "items" in fschema and isinstance(fschema["items"], dict) and "$ref" in fschema["items"]:
+                                    ref_name = extract_schema_name(fschema["items"]["$ref"])
+                                    if "." in ref_name:
+                                        ref_name = ref_name.split(".")[-1]
+                                    refs.add(ref_name)
+                    if refs:
+                        fork_data["references"] = sorted(refs)
+
+                    if full_name not in items:
+                        items[full_name] = {
+                            "name": full_name,
+                            "kind": "class",
+                            "domain": domain,
+                            "introduced": fork,
+                            "modified_in": [],
+                            "forks": {},
+                        }
+                    else:
+                        items[full_name]["modified_in"].append(fork)
+
+                    items[full_name]["forks"][fork] = fork_data
+
+    print(f"  Extracted {len(items)} type schemas from {len(fork_dirs)} forks", file=sys.stderr)
+    return items
+
+
 def main():
     parser = argparse.ArgumentParser(description="Extract endpoints from OpenAPI specs")
     parser.add_argument("--profile", required=True, help="Spec profile name")

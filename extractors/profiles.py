@@ -279,11 +279,31 @@ RELAY_SPECS = SpecProfile(
 )
 
 
+BEACON_APIS = SpecProfile(
+    name="beacon-apis",
+    repo="ethereum/beacon-APIs",
+    source_format="openapi",
+    github_raw="https://raw.githubusercontent.com/ethereum/beacon-APIs/{branch}",
+    github_web="https://github.com/ethereum/beacon-APIs/blob/{branch}",
+    specs_subdir="types",
+    fork_config_path=None,
+    default_fork_order=["phase0", "altair", "bellatrix", "capella", "deneb", "electra", "fulu", "gloas"],
+    first_fork="phase0",
+    spec_files=[],
+    features_subdir=None,
+    file_domain_rules={},
+    section_domain_rules={},
+    type_alias_sections=[],
+    openapi_file="beacon-node-oapi.yaml",
+)
+
+
 # Registry
 PROFILES = {
     "consensus-specs": CONSENSUS_SPECS,
     "builder-specs": BUILDER_SPECS,
     "relay-specs": RELAY_SPECS,
+    "beacon-apis": BEACON_APIS,
 }
 
 
