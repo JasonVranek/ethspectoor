@@ -156,10 +156,13 @@ def is_dataclass(node: ast.ClassDef) -> bool:
 def is_constant_assign(node) -> bool:
     """Check if a module-level assignment looks like a constant.
 
-    Heuristic: name is UPPER_CASE or a known pattern.
+    Matches UPPER_CASE names and annotated assignments with uppercase first char.
+    Skips PascalCase-only names (those are type aliases).
     """
     if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
-        return node.target.id[0].isupper() or node.target.id.isupper()
+        name = node.target.id
+        # UPPER_CASE or UpperCase with underscores (e.g., GAS_LIMIT)
+        return name.isupper() or ("_" in name and name[0].isupper())
     if isinstance(node, ast.Assign) and len(node.targets) == 1:
         target = node.targets[0]
         if isinstance(target, ast.Name):
@@ -170,16 +173,29 @@ def is_constant_assign(node) -> bool:
 def is_type_alias(node) -> bool:
     """Check if a module-level assignment is a type alias.
 
-    Pattern: Name = SomeType (simple Name on the right side, both capitalized)
+    Patterns:
+      Name = SomeType (simple Name on the right side)
+      Name = SomeType[Arg] (subscript, e.g., List[int])
+    Excludes UPPER_CASE constants and function calls.
     """
+    # TypeAlias annotation: Name: TypeAlias = SomeType
+    if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+        ann = node.annotation
+        if isinstance(ann, ast.Name) and ann.id == "TypeAlias":
+            return True
+
     if isinstance(node, ast.Assign) and len(node.targets) == 1:
         target = node.targets[0]
-        if isinstance(target, ast.Name) and target.id[0].isupper():
-            # Right side should be a simple Name or Attribute (not a function call)
+        if isinstance(target, ast.Name) and target.id[0].isupper() and not target.id.isupper():
             val = node.value
+            # Simple name: Address = Bytes20
             if isinstance(val, ast.Name) and val.id[0].isupper():
                 return True
+            # Attribute: foo.Bar
             if isinstance(val, ast.Attribute):
+                return True
+            # Subscript: List[SomeType]
+            if isinstance(val, ast.Subscript):
                 return True
     return False
 
@@ -316,11 +332,15 @@ def extract_file(file_path: Path, source_lines: list, tree: ast.Module,
                 "domain": domain,
             }
 
-        # Type alias extraction (Name = SomeType)
+        # Type alias extraction (Name = SomeType or Name: TypeAlias = SomeType)
         elif is_type_alias(node):
-            target = node.targets[0]
-            name = target.id
-            val = annotation_to_str(node.value)
+            if isinstance(node, ast.AnnAssign):
+                name = node.target.id
+                val = annotation_to_str(node.value) if node.value else ""
+            else:
+                target = node.targets[0]
+                name = target.id
+                val = annotation_to_str(node.value)
             line = node.lineno
             github_url = f"{github_url_base}#L{line}"
             type_aliases[name] = {
@@ -565,6 +585,17 @@ def build_output(profile: SpecProfile, items: dict, constants: dict,
             domain_items[d]["functions"].append(name)
         else:
             domain_items[d]["other"].append(name)
+
+    # Filter references to known items only (removes noise from primitive types,
+    # variable names, etc.) and remove self-references
+    known_names = set(items.keys())
+    for name, item in items.items():
+        for fork, fdata in item["forks"].items():
+            raw_refs = fdata.get("references", [])
+            fdata["references"] = sorted(
+                r for r in raw_refs
+                if r in known_names and r != name
+            )
 
     # Build reverse references
     ref_index = {}

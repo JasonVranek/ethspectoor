@@ -32,9 +32,12 @@ def load_indexes(indexes_dir: str) -> dict:
 def build_unified_type_map(indexes: dict) -> dict:
     priority = {
         "ethereum/consensus-specs": 1,
-        "ethereum/builder-specs": 2,
-        "flashbots/relay-specs": 3,
-        "ethereum/beacon-APIs": 4,
+        "ethereum/execution-specs": 2,
+        "ethereum/builder-specs": 3,
+        "flashbots/relay-specs": 4,
+        "ethereum/beacon-APIs": 5,
+        "ethereum/execution-apis": 6,
+        "ethereum/remote-signing-api": 7,
     }
 
     unified = {}
@@ -66,6 +69,10 @@ def find_cross_spec_references(indexes: dict, unified_type_map: dict) -> dict:
                     if ref_name in unified_type_map:
                         ref_source = unified_type_map[ref_name]["source"]
                         if ref_source != spec_source:
+                            # Skip if the referring spec also defines this type
+                            # (indicates independent definitions, not cross-spec dependency)
+                            if ref_name in data.get("items", {}):
+                                continue
                             key = f"{spec_name}:{item_name} -> {ref_name}"
                             if key not in cross_refs:
                                 cross_refs[key] = {

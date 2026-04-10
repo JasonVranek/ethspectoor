@@ -145,7 +145,7 @@ class SpecStore:
                 result["params"] = fork_data.get("params", [])
                 result["return_type"] = fork_data.get("return_type", "")
                 result["eips"] = fork_data.get("eips", [])
-                result["prose"] = fork_data.get("prose", "")
+                result["prose"] = fork_data.get("prose", "") or fork_data.get("description", "")
                 # Remove empty fields
                 result = {k: v for k, v in result.items() if v or v == 0}
             else:
@@ -206,6 +206,12 @@ class SpecStore:
                     "fork_variants": endpoint.get("fork_variants", {}),
                     "ssz_support": endpoint.get("content_negotiation", {}).get("ssz_support", False),
                     "github_url": endpoint.get("github_url", ""),
+                    # JSON-RPC specific fields (execution-apis)
+                    "result": endpoint.get("result"),
+                    "errors": endpoint.get("errors"),
+                    "examples": endpoint.get("examples"),
+                    "domain": endpoint.get("domain"),
+                    "introduced_fork": endpoint.get("introduced_fork"),
                 }
 
                 if endpoint.get("request_body"):
@@ -227,17 +233,25 @@ class SpecStore:
             data = self.indexes[spec_name]
             fs = data.get("fork_summary", {}).get(fork)
             if fs:
-                result[spec_name] = {
+                entry = {
                     "new": fs.get("new", []),
                     "modified": fs.get("modified", []),
                     "total": fs.get("total_definitions", 0),
                 }
+                # Include new_methods (OpenRPC) and new_constants (Python) if present
+                if fs.get("new_methods"):
+                    entry["new_methods"] = fs["new_methods"]
+                if fs.get("new_constants"):
+                    entry["new_constants"] = fs["new_constants"]
+                if fs.get("eips"):
+                    entry["fork_eips"] = fs["eips"]
+                result[spec_name] = entry
 
             # Also check EIP index
             eip_index = data.get("_eip_index", {})
             fork_eips = {}
             for eip_num, eip_data in eip_index.items():
-                fork_items = [i for i in eip_data["items"] if i["fork"] == fork]
+                fork_items = [i for i in eip_data.get("items", []) if i.get("fork") == fork]
                 if fork_items:
                     fork_eips[f"EIP-{eip_num}"] = fork_items
             if fork_eips:
