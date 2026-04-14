@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" fill="none">
+  <!-- Left lens: Ethereum diamond -->
+  <g transform="translate(58,40)">
+    <polygon points="0,-30 -22,0 0,-8" fill="#7b8db8" opacity="0.85"/>
+    <polygon points="0,-30 22,0 0,-8" fill="#a8bad6" opacity="0.85"/>
+    <polygon points="0,30 -22,0 0,5" fill="#5c6d94" opacity="0.85"/>
+    <polygon points="0,30 22,0 0,5" fill="#7b8db8" opacity="0.85"/>
+  </g>
+
+  <!-- Right lens: Ethereum diamond -->
+  <g transform="translate(142,40)">
+    <polygon points="0,-30 -22,0 0,-8" fill="#7b8db8" opacity="0.85"/>
+    <polygon points="0,-30 22,0 0,-8" fill="#a8bad6" opacity="0.85"/>
+    <polygon points="0,30 -22,0 0,5" fill="#5c6d94" opacity="0.85"/>
+    <polygon points="0,30 22,0 0,5" fill="#7b8db8" opacity="0.85"/>
+  </g>
+
+  <!-- Diamond-shaped frames to match lens geometry -->
+  <!-- Left frame -->
+  <path d="M 58,6 L 83,40 58,74 33,40 Z"
+        stroke="#d0d0d0" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+  <!-- Right frame -->
+  <path d="M 142,6 L 167,40 142,74 117,40 Z"
+        stroke="#d0d0d0" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+
+  <!-- Bridge -->
+  <path d="M 83,30 Q 100,20 117,30" stroke="#d0d0d0" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Left temple -->
+  <path d="M 33,30 L 6,24" stroke="#d0d0d0" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Right temple -->
+  <path d="M 167,30 L 194,24" stroke="#d0d0d0" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+</svg>

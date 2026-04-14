@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Left lens: Ethereum diamond -->
+  <g transform="translate(10,16)">
+    <polygon points="0,-7 -5.5,0 0,-2" fill="#7b8db8"/>
+    <polygon points="0,-7 5.5,0 0,-2" fill="#a8bad6"/>
+    <polygon points="0,7 -5.5,0 0,1.5" fill="#5c6d94"/>
+    <polygon points="0,7 5.5,0 0,1.5" fill="#7b8db8"/>
+  </g>
+  <!-- Right lens: Ethereum diamond -->
+  <g transform="translate(22,16)">
+    <polygon points="0,-7 -5.5,0 0,-2" fill="#7b8db8"/>
+    <polygon points="0,-7 5.5,0 0,-2" fill="#a8bad6"/>
+    <polygon points="0,7 -5.5,0 0,1.5" fill="#5c6d94"/>
+    <polygon points="0,7 5.5,0 0,1.5" fill="#7b8db8"/>
+  </g>
+  <!-- Left frame -->
+  <path d="M 10,8 L 15.5,16 10,24 4.5,16 Z" stroke="#d0d0d0" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+  <!-- Right frame -->
+  <path d="M 22,8 L 27.5,16 22,24 16.5,16 Z" stroke="#d0d0d0" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+  <!-- Left temple -->
+  <path d="M 4.5,13 L 1,11.5" stroke="#d0d0d0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Right temple -->
+  <path d="M 27.5,13 L 31,11.5" stroke="#d0d0d0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+</svg>
