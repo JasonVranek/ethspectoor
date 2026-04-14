@@ -113,7 +113,7 @@ def resolve_canonical_spec(type_map, name, repo_to_spec):
     return None
 
 
-def build_catalog(indexes_dir, output_path):
+def build_catalog(indexes_dir, output_path, include_prs=False):
     indexes_dir = Path(indexes_dir)
     catalog = {
         "_meta": {"generator": "build_catalog.py", "specs": {}},
@@ -250,6 +250,32 @@ def build_catalog(indexes_dir, output_path):
             "type_aliases": len(catalog["specs"][spec_name]["type_aliases"]),
         }
 
+    # Merge PR overlays (if requested)
+    if include_prs:
+        pr_dir = indexes_dir / "pr"
+        if pr_dir.exists():
+            pr_overlays = {}
+            for spec_dir in sorted(pr_dir.iterdir()):
+                if not spec_dir.is_dir():
+                    continue
+                spec_name = spec_dir.name
+                pr_overlays[spec_name] = {}
+                for pr_file in sorted(spec_dir.glob("pr-*.json")):
+                    with open(pr_file) as f:
+                        overlay = json.load(f)
+                    pr_num = str(overlay.get("number", pr_file.stem.replace("pr-", "")))
+                    pr_overlays[spec_name][pr_num] = {
+                        k: overlay[k] for k in overlay if k != "_meta"
+                    }
+                if not pr_overlays[spec_name]:
+                    del pr_overlays[spec_name]
+
+            if pr_overlays:
+                catalog["pr_overlays"] = pr_overlays
+                total_prs = sum(len(v) for v in pr_overlays.values())
+                print(f"PR overlays: {total_prs} PRs across {len(pr_overlays)} specs",
+                      file=sys.stderr)
+
     # Write
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -267,5 +293,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--indexes-dir", default="indexes")
     parser.add_argument("--output", default="docs/catalog.json")
+    parser.add_argument("--include-prs", action="store_true",
+                        help="Include PR shadow overlays in catalog")
     args = parser.parse_args()
-    build_catalog(args.indexes_dir, args.output)
+    build_catalog(args.indexes_dir, args.output, include_prs=args.include_prs)

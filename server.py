@@ -44,6 +44,7 @@ class SpecStore:
         self.type_map: dict = {}          # name -> canonical source info
         self.cross_refs: dict = {}        # cross-spec references
         self.all_endpoints: dict = {}     # ep_key -> (spec_name, endpoint)
+        self.pr_overlays: dict = {}       # spec_name -> {pr_num: overlay}
 
     def load(self, catalog_path: str):
         """Load the unified catalog."""
@@ -55,11 +56,68 @@ class SpecStore:
         self.type_map = self.catalog.get("type_map", {})
         self.cross_refs = self.catalog.get("cross_refs", {})
 
+        self.pr_overlays = self.catalog.get("pr_overlays", {})
+
         # Build flat endpoint index
         self.all_endpoints = {}
         for spec_name, spec_data in self.specs.items():
             for ep_key, endpoint in spec_data.get("endpoints", {}).items():
                 self.all_endpoints[ep_key] = (spec_name, endpoint)
+
+    # ── PR overlay resolution ────────────────────────────────────────
+
+    @staticmethod
+    def parse_pr_fork(fork: str) -> int | None:
+        """If fork matches 'pr-NNNN', return the PR number. Else None."""
+        if fork and fork.startswith("pr-"):
+            try:
+                return int(fork[3:])
+            except ValueError:
+                pass
+        return None
+
+    def find_pr_overlay(self, pr_number: int) -> dict | None:
+        """Find a PR overlay by number across all specs."""
+        pr_str = str(pr_number)
+        for spec_name, prs in self.pr_overlays.items():
+            if pr_str in prs:
+                return prs[pr_str]
+        return None
+
+    def resolve_pr_item(self, name: str, pr_number: int) -> dict | None:
+        """Resolve an item at a PR fork.
+
+        If the PR changed this item, returns the overlay version (full post-PR
+        content) wrapped as a fork entry. Otherwise returns mainline data.
+        """
+        overlay = self.find_pr_overlay(pr_number)
+        if not overlay:
+            return None
+
+        items_changed = overlay.get("items_changed", {})
+        if name in items_changed:
+            return items_changed[name]
+        return None  # item not changed by this PR -- caller falls back to mainline
+
+    def list_pr_overlays(self, spec: str = "") -> list[dict]:
+        """List all indexed PR overlays, optionally filtered by spec."""
+        results = []
+        for spec_name, prs in self.pr_overlays.items():
+            if spec and spec != spec_name:
+                continue
+            for pr_num, overlay in prs.items():
+                results.append({
+                    "spec": spec_name,
+                    "number": overlay.get("number", int(pr_num)),
+                    "title": overlay.get("title", ""),
+                    "author": overlay.get("author", ""),
+                    "base_fork": overlay.get("base_ref", ""),
+                    "url": overlay.get("url", ""),
+                    "updated_at": overlay.get("updated_at", ""),
+                    "items_changed": len(overlay.get("items_changed", {})),
+                    "constants_changed": len(overlay.get("constants_changed", {})),
+                })
+        return results
 
     def specs_summary(self) -> list:
         """Return summary of loaded specs."""
@@ -78,6 +136,33 @@ class SpecStore:
 
     def lookup_type(self, name: str, fork: Optional[str] = None, spec: Optional[str] = None) -> Optional[dict]:
         """Look up a type/function/item by name."""
+        # Handle PR fork resolution
+        pr_num = self.parse_pr_fork(fork) if fork else None
+        if pr_num is not None:
+            pr_item = self.resolve_pr_item(name, pr_num)
+            overlay = self.find_pr_overlay(pr_num)
+            if pr_item:
+                # Return the PR's version of this item
+                result = {
+                    "name": name,
+                    "spec": pr_item.get("spec", overlay.get("_meta", {}).get("spec", "")),
+                    "kind": pr_item.get("kind", ""),
+                    "domain": pr_item.get("domain", ""),
+                    "pr": pr_num,
+                    "pr_action": pr_item.get("action", ""),
+                    "fork": pr_item.get("fork", ""),
+                    "diff_summary": pr_item.get("diff_summary", {}),
+                }
+                for key in ["fields", "code", "references", "params", "eips",
+                            "return_type", "prose", "github_url"]:
+                    if pr_item.get(key):
+                        result[key] = pr_item[key]
+                return result
+            else:
+                # Item not changed by this PR -- fall through to mainline
+                # but strip the PR fork so mainline lookup works
+                fork = None
+
         item = None
 
         if spec:
@@ -227,6 +312,35 @@ class SpecStore:
 
     def what_changed(self, fork: str, spec: Optional[str] = None) -> dict:
         """Return what changed in a specific fork."""
+        # Handle PR fork
+        pr_num = self.parse_pr_fork(fork)
+        if pr_num is not None:
+            overlay = self.find_pr_overlay(pr_num)
+            if not overlay:
+                return {"error": f"No PR overlay found for #{pr_num}. Run pr_index.py first."}
+            result = {
+                "pr": pr_num,
+                "title": overlay.get("title", ""),
+                "author": overlay.get("author", ""),
+                "url": overlay.get("url", ""),
+                "base_fork": overlay.get("base_ref", ""),
+            }
+            items = overlay.get("items_changed", {})
+            if items:
+                result["items_changed"] = {
+                    name: {
+                        "action": data.get("action", ""),
+                        "kind": data.get("kind", ""),
+                        "domain": data.get("domain", ""),
+                        "diff_summary": data.get("diff_summary", {}),
+                    }
+                    for name, data in items.items()
+                }
+            consts = overlay.get("constants_changed", {})
+            if consts:
+                result["constants_changed"] = consts
+            return result
+
         result = {}
 
         specs_to_check = [spec] if spec and spec in self.specs else list(self.specs.keys())
@@ -518,6 +632,37 @@ def create_server(store: SpecStore, catalog_path: str, indexes_dir: Optional[str
                 },
             ),
             Tool(
+                name="list_prs",
+                description="List indexed PR overlays. Shows PR number, title, author, and what changed. Use PR forks (e.g. 'pr-1234') in lookup_type, diff_type, and what_changed.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "spec": {
+                            "type": "string",
+                            "description": "Optional: filter to a specific spec (e.g., 'consensus-specs').",
+                        },
+                    },
+                },
+            ),
+            Tool(
+                name="index_pr",
+                description="Index a GitHub PR as a virtual fork. Fetches the branch, extracts spec changes, diffs against mainline, and makes it queryable via pr-NNNN fork syntax. After indexing, use lookup_type(fork='pr-NNNN'), diff_type(to_fork='pr-NNNN'), or what_changed(fork='pr-NNNN') to inspect the PR.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "spec": {
+                            "type": "string",
+                            "description": "Spec name (e.g., 'consensus-specs', 'builder-specs').",
+                        },
+                        "pr": {
+                            "type": "integer",
+                            "description": "PR number to index.",
+                        },
+                    },
+                    "required": ["spec", "pr"],
+                },
+            ),
+            Tool(
                 name="reindex",
                 description="Rebuild spec indexes from source repos and reload. Requires repos directory to be configured.",
                 inputSchema={
@@ -572,6 +717,16 @@ def create_server(store: SpecStore, catalog_path: str, indexes_dir: Optional[str
                     to_fork=arguments["to_fork"],
                 )
 
+            elif name == "list_prs":
+                result = store.list_pr_overlays(spec=arguments.get("spec", ""))
+
+            elif name == "index_pr":
+                result = await _index_pr(
+                    store, catalog_path, indexes_dir, repos_dir,
+                    spec=arguments["spec"],
+                    pr_number=arguments["pr"],
+                )
+
             elif name == "reindex":
                 result = await _reindex(
                     store, catalog_path, indexes_dir, repos_dir,
@@ -590,19 +745,38 @@ def create_server(store: SpecStore, catalog_path: str, indexes_dir: Optional[str
 
 
 def _diff_type(store: SpecStore, name: str, from_fork: str, to_fork: str) -> dict:
-    """Compare a type between two forks."""
+    """Compare a type between two forks (supports PR forks like 'pr-1234')."""
     item = store.items.get(name)
     if not item:
         return {"error": f"Type '{name}' not found"}
 
     forks = item.get("forks", {})
-    if from_fork not in forks:
-        return {"error": f"'{name}' not found at fork '{from_fork}'", "available": list(forks.keys())}
-    if to_fork not in forks:
-        return {"error": f"'{name}' not found at fork '{to_fork}'", "available": list(forks.keys())}
 
-    from_data = forks[from_fork]
-    to_data = forks[to_fork]
+    # Resolve PR forks
+    def resolve_fork_data(fork_name):
+        pr_num = store.parse_pr_fork(fork_name)
+        if pr_num is not None:
+            pr_item = store.resolve_pr_item(name, pr_num)
+            if pr_item:
+                return pr_item, True  # (data, is_pr)
+            # Item not changed by PR -- use mainline at the PR's base fork
+            overlay = store.find_pr_overlay(pr_num)
+            base = overlay.get("base_ref", "") if overlay else ""
+            # Try to find the item at the latest mainline fork
+            if forks:
+                return forks.get(list(forks.keys())[-1], {}), False
+            return None, False
+        return forks.get(fork_name), False
+
+    from_data, from_is_pr = resolve_fork_data(from_fork)
+    to_data, to_is_pr = resolve_fork_data(to_fork)
+
+    if not from_data:
+        avail = list(forks.keys())
+        return {"error": f"'{name}' not found at fork '{from_fork}'", "available": avail}
+    if not to_data:
+        avail = list(forks.keys())
+        return {"error": f"'{name}' not found at fork '{to_fork}'", "available": avail}
 
     result = {
         "name": name,
@@ -634,10 +808,14 @@ def _diff_type(store: SpecStore, name: str, from_fork: str, to_fork: str) -> dic
     # Code diff -- resolve deduped code for both forks
     fork_keys = list(forks.keys())
 
-    def resolve_code(fork_name):
-        code = forks[fork_name].get("code", "")
+    def resolve_code(fork_name, fork_data, is_pr):
+        # PR data or direct data always has full code
+        code = fork_data.get("code", "")
         if code:
             return code
+        if is_pr:
+            return ""
+        # Mainline dedup: walk backwards through forks
         idx = fork_keys.index(fork_name) if fork_name in fork_keys else -1
         for i in range(idx - 1, -1, -1):
             prev = forks[fork_keys[i]].get("code", "")
@@ -645,8 +823,8 @@ def _diff_type(store: SpecStore, name: str, from_fork: str, to_fork: str) -> dic
                 return prev
         return ""
 
-    from_code = resolve_code(from_fork)
-    to_code = resolve_code(to_fork)
+    from_code = resolve_code(from_fork, from_data, from_is_pr)
+    to_code = resolve_code(to_fork, to_data, to_is_pr)
 
     if from_code != to_code:
         result["code_changed"] = True
@@ -658,6 +836,105 @@ def _diff_type(store: SpecStore, name: str, from_fork: str, to_fork: str) -> dic
     # Source links
     result["from_url"] = from_data.get("github_url", "")
     result["to_url"] = to_data.get("github_url", "")
+
+    return result
+
+
+async def _index_pr(store: SpecStore, catalog_path: str, indexes_dir: Optional[str],
+                    repos_dir: Optional[str], spec: str, pr_number: int) -> dict:
+    """Index a single PR: fetch, extract, diff, rebuild catalog, reload."""
+    if not repos_dir:
+        return {"error": "No repos directory configured. Start server with --repos-dir."}
+    if not indexes_dir:
+        return {"error": "No indexes directory configured."}
+
+    base_dir = Path(__file__).parent
+    pr_script = str(base_dir / "pr_index.py")
+    catalog_script = str(base_dir / "build_catalog.py")
+
+    # Map spec names to repo subdirectories
+    spec_repo_map = {
+        "consensus-specs": "consensus-specs",
+        "builder-specs": "builder-specs",
+        "relay-specs": "relay-specs",
+        "beacon-apis": "beacon-APIs",
+        "remote-signing-api": "remote-signing-api",
+        "execution-specs": "execution-specs",
+        "execution-apis": "execution-apis",
+    }
+
+    if spec not in spec_repo_map:
+        return {"error": f"Unknown spec: {spec}. Available: {', '.join(spec_repo_map.keys())}"}
+
+    repo_path = os.path.join(repos_dir, spec_repo_map[spec])
+    if not os.path.isdir(repo_path):
+        return {"error": f"Repo not found: {repo_path}"}
+
+    result = {}
+
+    # Step 1: Run pr_index.py
+    token = os.environ.get("GITHUB_TOKEN", "")
+    cmd = [
+        sys.executable, pr_script,
+        "--spec", spec,
+        "--repo-dir", repo_path,
+        "--indexes-dir", indexes_dir,
+        "--pr", str(pr_number),
+    ]
+    if token:
+        cmd.extend(["--github-token", token])
+
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+        )
+        _, stderr = await proc.communicate()
+        stderr_text = stderr.decode()
+        if proc.returncode == 0:
+            result["index"] = {"status": "ok", "output": stderr_text[-500:]}
+        else:
+            return {"error": f"pr_index.py failed: {stderr_text[-500:]}"}
+    except Exception as e:
+        return {"error": f"pr_index.py error: {str(e)}"}
+
+    # Step 2: Rebuild catalog with PR overlays
+    catalog_cmd = [
+        sys.executable, catalog_script,
+        "--indexes-dir", indexes_dir,
+        "--output", catalog_path,
+        "--include-prs",
+    ]
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *catalog_cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+        )
+        await proc.communicate()
+        result["catalog"] = {"status": "ok" if proc.returncode == 0 else "error"}
+    except Exception as e:
+        result["catalog"] = {"status": "error", "message": str(e)}
+
+    # Step 3: Reload
+    store.load(catalog_path)
+    result["reload"] = {"status": "ok", "items": len(store.items)}
+
+    # Step 4: Return a summary of what the PR changes
+    overlay = store.find_pr_overlay(pr_number)
+    if overlay:
+        items_changed = overlay.get("items_changed", {})
+        result["pr"] = {
+            "number": pr_number,
+            "title": overlay.get("title", ""),
+            "author": overlay.get("author", ""),
+            "items_changed": len(items_changed),
+            "summary": {
+                name: info.get("diff_summary", {})
+                for name, info in list(items_changed.items())[:10]
+            },
+        }
+        if len(items_changed) > 10:
+            result["pr"]["summary"]["..."] = f"and {len(items_changed) - 10} more"
+    else:
+        result["pr"] = {"number": pr_number, "items_changed": 0, "note": "No spec changes detected"}
 
     return result
 
@@ -676,13 +953,13 @@ async def _reindex(store: SpecStore, catalog_path: str, indexes_dir: Optional[st
     catalog_script = str(base_dir / "build_catalog.py")
 
     spec_repo_map = {
-        "consensus-specs": "specs/consensus-specs",
-        "builder-specs": "specs/builder-specs",
-        "relay-specs": "specs/relay-specs",
-        "beacon-apis": "specs/beacon-APIs",
-        "remote-signing-api": "specs/remote-signing-api",
-        "execution-specs": "specs/execution-specs",
-        "execution-apis": "specs/execution-apis",
+        "consensus-specs": "consensus-specs",
+        "builder-specs": "builder-specs",
+        "relay-specs": "relay-specs",
+        "beacon-apis": "beacon-APIs",
+        "remote-signing-api": "remote-signing-api",
+        "execution-specs": "execution-specs",
+        "execution-apis": "execution-apis",
     }
 
     spec_branches = {
@@ -734,12 +1011,18 @@ async def _reindex(store: SpecStore, catalog_path: str, indexes_dir: Optional[st
     except Exception as e:
         results["_linker"] = {"status": "error", "message": str(e)}
 
-    # Rebuild catalog
+    # Rebuild catalog (auto-include PR overlays if they exist)
+    catalog_cmd = [
+        sys.executable, catalog_script,
+        "--indexes-dir", indexes_dir,
+        "--output", catalog_path,
+    ]
+    pr_dir = Path(indexes_dir) / "pr"
+    if pr_dir.exists() and any(pr_dir.rglob("pr-*.json")):
+        catalog_cmd.append("--include-prs")
     try:
         proc = await asyncio.create_subprocess_exec(
-            sys.executable, catalog_script,
-            "--indexes-dir", indexes_dir,
-            "--output", catalog_path,
+            *catalog_cmd,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
         )
         await proc.communicate()

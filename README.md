@@ -21,6 +21,21 @@ Open `docs/index.html` in a browser. No build step, no dependencies.
   showing how data flows between consensus, execution, builder, relay, and signer
   across 18 protocol endpoints
 
+## Setup
+
+Requires Python 3.10+ and [uv](https://docs.astral.sh/uv/).
+
+```bash
+# Create a virtual environment and install dependencies
+uv venv
+source .venv/bin/activate
+uv pip install pyyaml mcp
+```
+
+`pyyaml` is needed by the extractors (build pipeline). `mcp` is needed by
+`server.py`. If you only want to run the build pipeline without the MCP
+server, `pyyaml` alone is sufficient.
+
 ## MCP Server
 
 ```bash
@@ -34,10 +49,39 @@ python3 server.py --catalog docs/catalog.json --repos-dir ./repos
 python3 server.py --rebuild --repos-dir ./repos
 ```
 
-8 tools: `list_specs`, `lookup_type`, `lookup_endpoint`, `what_changed`,
-`trace_type`, `search`, `diff_type`, `reindex`.
+Or run without a persistent venv using `uv run`:
 
-Dependencies: `pyyaml`, `mcp`.
+```bash
+uv run --with mcp --with pyyaml python3 server.py --catalog docs/catalog.json
+```
+
+### Hermes / Claude config.yaml
+
+```yaml
+mcp:
+  inspectoor:
+    command: "uv"
+    args:
+      - "run"
+      - "--with"
+      - "mcp"
+      - "--with"
+      - "pyyaml"
+      - "python3"
+      - "/path/to/inspectoor/server.py"
+      - "--catalog"
+      - "/path/to/inspectoor/docs/catalog.json"
+      - "--indexes-dir"
+      - "/path/to/inspectoor/indexes"
+      - "--repos-dir"
+      - "/path/to/inspectoor/repos/specs"
+```
+
+The `--indexes-dir` and `--repos-dir` flags are optional but enable the
+`reindex` tool to rebuild indexes from source repos without restarting.
+
+9 tools: `list_specs`, `lookup_type`, `lookup_endpoint`, `what_changed`,
+`trace_type`, `search`, `diff_type`, `reindex`, `list_prs`.
 
 ## Data Flow
 
@@ -60,6 +104,63 @@ repos/ --> build.py --> indexes/ (per-spec, intermediate)
 
 Per-spec indexes under `indexes/` are intermediate build artifacts. The
 canonical data lives in `docs/catalog.json`.
+
+## PR Shadow Indexes
+
+Track open PRs against spec repos as virtual forks. PRs are continuously
+indexed but invisible to normal queries. Reference them explicitly to see
+full resulting types, field-level diffs, and cross-type impact.
+
+```bash
+# Index all open PRs for consensus-specs
+python3 pr_index.py --spec consensus-specs --repo-dir ./repos/specs/consensus-specs
+
+# Index a single PR
+python3 pr_index.py --spec consensus-specs --repo-dir ./repos/specs/consensus-specs --pr 1234
+
+# Clean up merged/closed PRs
+python3 pr_index.py --spec consensus-specs --cleanup
+
+# List indexed PRs
+python3 pr_index.py --list
+```
+
+Requires a GitHub token for API access: set `GITHUB_TOKEN` env var or pass
+`--github-token`.
+
+PR overlays are stored as diffs from mainline. Only items the PR actually
+changes are stored, with full post-PR content (not patches). The catalog
+stays small even with many tracked PRs.
+
+### Querying PR data via MCP
+
+PR forks use the naming convention `pr-{number}`:
+
+```
+list_prs(spec="consensus-specs")
+  -> PR #4123: "Add exit queue to BeaconState" (gloas, 3 items changed)
+
+lookup_type("BeaconState", fork="pr-4123")
+  -> full BeaconState as it would look after the PR
+
+diff_type("BeaconState", from_fork="gloas", to_fork="pr-4123")
+  -> field-level diff: what the PR adds/removes/modifies
+
+what_changed(fork="pr-4123")
+  -> all items the PR touches with action (added/modified/removed)
+```
+
+Normal queries (no PR fork specified) never see PR data.
+
+### Build with PR overlays
+
+```bash
+# Build catalog including PR overlays
+python3 build_catalog.py --indexes-dir ./indexes --output docs/catalog.json --include-prs
+
+# Or start MCP server with --rebuild to re-extract and include PRs
+python3 server.py --rebuild --repos-dir ./repos --include-prs
+```
 
 ## Spec Coverage
 
@@ -113,8 +214,9 @@ consumed by both the MCP server and the explorer UI.
 .
 ├── build.py                  # orchestrates extraction per spec profile
 ├── build_catalog.py          # merges indexes into catalog.json (canonical artifact)
+├── pr_index.py               # PR shadow indexer (fetch, extract, diff open PRs)
 ├── link.py                   # cross-spec reference resolution
-├── server.py                 # MCP server (8 tools, reads catalog.json)
+├── server.py                 # MCP server (9 tools, reads catalog.json)
 ├── fetch_repos.sh            # clones all spec repos
 ├── extractors/
 │   ├── profiles.py           # spec profiles (paths, fork orders, extractor config)
@@ -125,6 +227,7 @@ consumed by both the MCP server and the explorer UI.
 │   ├── enrich.py             # structural annotation (fields, params, references, domains)
 │   └── fetch_examples.py     # test fixture fetcher (standalone)
 ├── indexes/                  # generated per-spec indexes (intermediate build artifacts)
+│   └── pr/                   # PR overlay indexes (per-spec, per-PR)
 ├── docs/
 │   ├── index.html            # explorer SPA (types, endpoints, diff, search)
 │   ├── visualizer.html       # transaction lifecycle diagram
