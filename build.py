@@ -3,27 +3,71 @@
 The Inspectoor -- Ethereum Specs Index builder.
 
 Orchestrates extraction, enrichment, and optional example fetching
-for one or more spec repos.
+for one or more spec repos. Auto-clones repos when not provided.
 
 Usage:
-    python3 build.py --profile builder-specs --repo-dir /path/to/builder-specs
+    # Build everything from scratch (clones repos, builds, links, catalogs)
+    python3 build.py --all
+
+    # Build a single spec (auto-clones if needed)
+    python3 build.py --profile builder-specs
+
+    # Build with an existing local clone
     python3 build.py --profile consensus-specs --repo-dir /path/to/consensus-specs
 """
 
 import argparse
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / "extractors"))
 
-from profiles import get_profile
+from profiles import get_profile, PROFILES
 from extract_markdown import extract_all, build_output
 from extract_openapi import extract_endpoints, extract_type_schemas
 from extract_python import extract_all as extract_python_all, build_output as build_python_output
 from extract_openrpc import extract_all as extract_openrpc_all, build_output as build_openrpc_output
 from enrich import enrich
+
+
+def ensure_repo(profile_name: str, repos_dir: str = "./repos/specs") -> tuple[str, str]:
+    """Clone or update a spec repo. Returns (repo_dir, branch)."""
+    profile = get_profile(profile_name)
+    clone_url = f"https://github.com/{profile.repo}.git"
+    branch = profile.default_branch
+    # Use the repo name from the GitHub path (preserves casing like beacon-APIs)
+    repo_name = profile.repo.split("/")[-1]
+    repo_dir = os.path.join(repos_dir, repo_name)
+
+    if os.path.isdir(os.path.join(repo_dir, ".git")):
+        print(f"  Updating {profile_name} ({branch})...", file=sys.stderr)
+        try:
+            subprocess.run(
+                ["git", "fetch", "origin"],
+                cwd=repo_dir, capture_output=True, check=True
+            )
+            subprocess.run(
+                ["git", "checkout", branch],
+                cwd=repo_dir, capture_output=True, check=True
+            )
+            subprocess.run(
+                ["git", "pull", "--ff-only", "origin", branch],
+                cwd=repo_dir, capture_output=True, check=True
+            )
+        except subprocess.CalledProcessError:
+            print(f"    Warning: could not update {profile_name}", file=sys.stderr)
+    else:
+        print(f"  Cloning {profile_name} ({branch})...", file=sys.stderr)
+        os.makedirs(os.path.dirname(repo_dir), exist_ok=True)
+        subprocess.run(
+            ["git", "clone", "--depth", "1", "--branch", branch, clone_url, repo_dir],
+            check=True
+        )
+
+    return repo_dir, branch
 
 
 def build(profile_name: str, repo_dir: str, branch: str = "main",
@@ -207,23 +251,126 @@ def build(profile_name: str, repo_dir: str, branch: str = "main",
     return output_path
 
 
+def build_all(repos_dir: str = "./repos/specs", output_dir: str = "./indexes",
+              skip_enrich: bool = False, include_prs: bool = False) -> None:
+    """Build all specs: fetch repos, extract, link, and build catalog."""
+    base_dir = Path(__file__).parent
+    link_script = str(base_dir / "link.py")
+    catalog_script = str(base_dir / "build_catalog.py")
+
+    print("\n" + "=" * 60, file=sys.stderr)
+    print("The Inspectoor -- Full Build", file=sys.stderr)
+    print(f"  Repos: {repos_dir}", file=sys.stderr)
+    print(f"  Indexes: {output_dir}", file=sys.stderr)
+    print("=" * 60 + "\n", file=sys.stderr)
+
+    # Step 1: Clone/update all repos and build indexes
+    for profile_name in PROFILES:
+        repo_dir, branch = ensure_repo(profile_name, repos_dir)
+        build(
+            profile_name=profile_name,
+            repo_dir=repo_dir,
+            branch=branch,
+            output_dir=output_dir,
+            skip_enrich=skip_enrich,
+        )
+
+    # Step 2: Cross-reference linking
+    print("\n" + "=" * 60, file=sys.stderr)
+    print("Cross-reference linking...", file=sys.stderr)
+    print("=" * 60 + "\n", file=sys.stderr)
+    subprocess.run(
+        [sys.executable, link_script, "--indexes-dir", output_dir],
+        check=True
+    )
+
+    # Step 3: Index PRs (if requested)
+    if include_prs:
+        pr_script = str(base_dir / "pr_index.py")
+        github_token = os.environ.get("GITHUB_TOKEN", "")
+        print("\n" + "=" * 60, file=sys.stderr)
+        print("Indexing open PRs...", file=sys.stderr)
+        print("=" * 60 + "\n", file=sys.stderr)
+        for profile_name in PROFILES:
+            profile = get_profile(profile_name)
+            repo_name = profile.repo.split("/")[-1]
+            repo_dir = os.path.join(repos_dir, repo_name)
+            if not os.path.isdir(repo_dir):
+                continue
+            pr_args = [
+                sys.executable, pr_script,
+                "--spec", profile_name,
+                "--repo-dir", repo_dir,
+                "--indexes-dir", output_dir,
+            ]
+            if github_token:
+                pr_args.extend(["--github-token", github_token])
+            try:
+                subprocess.run(pr_args, check=True)
+            except subprocess.CalledProcessError:
+                print(f"  Warning: PR indexing failed for {profile_name}", file=sys.stderr)
+
+    # Step 4: Build catalog
+    print("\n" + "=" * 60, file=sys.stderr)
+    print("Building catalog...", file=sys.stderr)
+    print("=" * 60 + "\n", file=sys.stderr)
+    catalog_args = [
+        sys.executable, catalog_script,
+        "--indexes-dir", output_dir,
+        "--output", "docs/catalog.json",
+    ]
+    if include_prs:
+        catalog_args.append("--include-prs")
+    subprocess.run(catalog_args, check=True)
+
+    print("\n" + "=" * 60, file=sys.stderr)
+    print("BUILD COMPLETE", file=sys.stderr)
+    print(f"  Catalog: docs/catalog.json", file=sys.stderr)
+    print(f"  Open docs/index.html to explore", file=sys.stderr)
+    print("=" * 60 + "\n", file=sys.stderr)
+
+
 def main():
     parser = argparse.ArgumentParser(description="The Inspectoor -- build Ethereum spec indexes")
-    parser.add_argument("--profile", required=True,
-                        help="Spec profile (consensus-specs, builder-specs, relay-specs, beacon-apis)")
-    parser.add_argument("--repo-dir", required=True, help="Path to local repo clone")
+    parser.add_argument("--all", action="store_true",
+                        help="Build all specs (clones repos if needed, links, builds catalog)")
+    parser.add_argument("--profile",
+                        help="Spec profile (consensus-specs, builder-specs, etc.)")
+    parser.add_argument("--repo-dir",
+                        help="Path to local repo clone (auto-clones if omitted)")
+    parser.add_argument("--repos-dir", default="./repos/specs",
+                        help="Base directory for auto-cloned repos (default: ./repos/specs)")
     parser.add_argument("--output-dir", default="./indexes", help="Output directory")
-    parser.add_argument("--branch", default="main", help="Git branch for GitHub URLs")
+    parser.add_argument("--branch", help="Git branch (default: from profile)")
     parser.add_argument("--skip-enrich", action="store_true", help="Skip enrichment pass")
+    parser.add_argument("--include-prs", action="store_true",
+                        help="Include PR overlays in catalog (only with --all)")
     args = parser.parse_args()
 
-    build(
-        profile_name=args.profile,
-        repo_dir=args.repo_dir,
-        branch=args.branch,
-        output_dir=args.output_dir,
-        skip_enrich=args.skip_enrich,
-    )
+    if args.all:
+        build_all(
+            repos_dir=args.repos_dir,
+            output_dir=args.output_dir,
+            skip_enrich=args.skip_enrich,
+            include_prs=args.include_prs,
+        )
+    elif args.profile:
+        if args.repo_dir:
+            repo_dir = args.repo_dir
+            branch = args.branch or get_profile(args.profile).default_branch
+        else:
+            repo_dir, branch = ensure_repo(args.profile, args.repos_dir)
+            if args.branch:
+                branch = args.branch
+        build(
+            profile_name=args.profile,
+            repo_dir=repo_dir,
+            branch=branch,
+            output_dir=args.output_dir,
+            skip_enrich=args.skip_enrich,
+        )
+    else:
+        parser.error("Either --all or --profile is required")
 
 
 if __name__ == "__main__":

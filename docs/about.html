@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — The Inspectoor</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-2: #1c2128;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --text-dim: #6e7681;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --orange: #d29922;
+  --purple: #bc8cff;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-hover); text-decoration: underline; }
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  height: 52px;
+  min-height: 52px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+}
+.header .logo {
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--text);
+}
+.header .logo:hover { text-decoration: none; }
+.header .logo .accent { color: var(--accent); }
+.nav-tabs {
+  display: flex;
+  gap: 2px;
+  margin-left: 8px;
+}
+.nav-tab {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: all 0.15s;
+  text-decoration: none;
+}
+.nav-tab:hover { color: var(--text); background: var(--surface-2); text-decoration: none; }
+.nav-tab.active { color: var(--accent); background: rgba(88,166,255,0.1); }
+
+/* Content */
+.content {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+h1 {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+.subtitle {
+  color: var(--text-muted);
+  font-size: 16px;
+  margin-bottom: 40px;
+}
+h2 {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--accent);
+  margin: 36px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 16px 0 6px;
+}
+p {
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+}
+.card-title {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.card-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: var(--surface-2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--accent);
+}
+pre {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+  margin-bottom: 12px;
+  line-height: 1.7;
+  color: var(--text);
+}
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.tool-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+.tool-name {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--green);
+  font-weight: 600;
+}
+.tool-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.spec-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 16px;
+}
+.spec-tag {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 10px;
+  color: var(--text-muted);
+}
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  margin-top: 8px;
+  transition: border-color 0.15s;
+}
+.github-link:hover {
+  border-color: var(--accent);
+  text-decoration: none;
+}
+
+@media (max-width: 600px) {
+  .header { gap: 6px; padding: 0 8px; }
+  .nav-tabs { display: none; }
+  .content { padding: 24px 16px 60px; }
+  h1 { font-size: 22px; }
+  .tool-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a class="logo" href="index.html"><img src="logo.svg" alt="" style="height:20px;vertical-align:middle;margin-right:4px"> The <span class="accent">Inspectoor</span></a>
+  <div class="nav-tabs">
+    <a class="nav-tab" href="index.html#/">Specs</a>
+    <a class="nav-tab" href="index.html#/types">Types</a>
+    <a class="nav-tab" href="index.html#/endpoints">Endpoints</a>
+    <a class="nav-tab" href="index.html#/diff">Diff</a>
+    <a class="nav-tab" href="index.html#/prs">PRs</a>
+    <a class="nav-tab" href="visualizer.html">Visualizer</a>
+    <a class="nav-tab active" href="about.html">About</a>
+  </div>
+</div>
+
+<div class="content">
+  <h1><img src="logo.svg" alt="" style="height:28px;vertical-align:middle;margin-right:6px"> The <span style="color:var(--accent)">Inspectoor</span></h1>
+  <p class="subtitle">Deterministic extraction and exploration of all Ethereum specification data.</p>
+
+  <p>The Inspectoor parses every Ethereum spec repo and builds a structured index of types, endpoints, constants, presets, and containers. It tracks changes across forks, diffs fields between versions, and makes everything searchable through a browser UI and an MCP server for AI agents.</p>
+
+  <h2>Indexed Specifications</h2>
+  <div class="spec-list">
+    <span class="spec-tag">consensus-specs</span>
+    <span class="spec-tag">execution-specs</span>
+    <span class="spec-tag">execution-apis</span>
+    <span class="spec-tag">beacon-apis</span>
+    <span class="spec-tag">builder-specs</span>
+    <span class="spec-tag">relay-specs</span>
+    <span class="spec-tag">remote-signing-api</span>
+  </div>
+
+  <h2>Explorer UI</h2>
+  <p>The web interface has six main views:</p>
+
+  <div class="card">
+    <div class="card-title">Specs</div>
+    <div class="card-desc">Browse all indexed spec repos. See which forks are available and jump into any spec's types or endpoints.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Types</div>
+    <div class="card-desc">Search and inspect every container, enum, and type alias across all specs. View fields, see which fork introduced a type, and trace its dependencies.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Endpoints</div>
+    <div class="card-desc">Browse all API endpoints from beacon-apis, execution-apis, builder-specs, and more. See parameters, request/response schemas, and which spec version defines them.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Diff</div>
+    <div class="card-desc">Compare types between any two forks. See exactly which fields were added, removed, or changed. Useful for tracking breaking changes across upgrades.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">PRs</div>
+    <div class="card-desc">Index open pull requests against spec repos. See what types and endpoints a PR would change before it merges.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Visualizer</div>
+    <div class="card-desc">Interactive graph of type dependencies. See how containers reference each other and trace the full dependency tree for any type.</div>
+  </div>
+
+  <h2>MCP Server</h2>
+  <p>The Inspectoor includes a Model Context Protocol (MCP) server so AI agents (Claude, Cursor, Windsurf, etc.) can query Ethereum spec data programmatically. Connect it to any MCP-compatible client and your agent gets direct access to the full spec index.</p>
+
+  <h3>Available Tools</h3>
+  <div class="tool-grid">
+    <div class="tool-item">
+      <div class="tool-name">lookup_type</div>
+      <div class="tool-desc">Get full definition of a type by name and fork</div>
+    </div>
+    <div class="tool-item">
+      <div class="tool-name">diff_type</div>
+      <div class="tool-desc">Compare a type between two forks</div>
+    </div>
+    <div class="tool-item">
+      <div class="tool-name">what_changed</div>
+      <div class="tool-desc">List all type changes between two forks</div>
+    </div>
+    <div class="tool-item">
+      <div class="tool-name">search</div>
+      <div class="tool-desc">Full-text search across all specs and types</div>
+    </div>
+    <div class="tool-item">
+      <div class="tool-name">trace_type</div>
+      <div class="tool-desc">Get the full dependency tree of a type</div>
+    </div>
+    <div class="tool-item">
+      <div class="tool-name">lookup_endpoint</div>
+      <div class="tool-desc">Get details of an API endpoint by path</div>
+    </div>
+    <div class="tool-item">
+      <div class="tool-name">list_specs</div>
+      <div class="tool-desc">List all indexed spec repos and their forks</div>
+    </div>
+    <div class="tool-item">
+      <div class="tool-name">list_prs</div>
+      <div class="tool-desc">List open PRs indexed against spec repos</div>
+    </div>
+    <div class="tool-item">
+      <div class="tool-name">index_pr</div>
+      <div class="tool-desc">Index a specific PR to see what it changes</div>
+    </div>
+  </div>
+
+  <h2>Setup</h2>
+  <p>Requires Python 3.10+ and git. One command builds everything.</p>
+  <pre>git clone https://github.com/JasonVranek/inspectoor
+cd inspectoor
+
+# Install dependencies
+pip install pyyaml mcp
+
+# Build everything: clones all 7 spec repos, extracts, links, builds catalog
+python3 build.py --all
+
+# Open the explorer
+open docs/index.html</pre>
+
+  <p>That's it. <code>build.py --all</code> clones all spec repos to <code>./repos/specs/</code>,
+  builds per-spec indexes, runs cross-reference linking, and assembles the catalog.
+  First run takes a few minutes to clone. Subsequent runs pull updates and rebuild.</p>
+
+  <h3>MCP Server</h3>
+  <p>Start the MCP server for AI agent integration:</p>
+  <pre># Start the server (stdio transport)
+python3 server.py --catalog docs/catalog.json</pre>
+
+  <p>For MCP client configuration (Claude Desktop, Hermes, Cursor), add to your config:</p>
+  <pre>mcp:
+  inspectoor:
+    command: "uv"
+    args:
+      - "run"
+      - "--with"
+      - "mcp"
+      - "--with"
+      - "pyyaml"
+      - "python3"
+      - "/path/to/inspectoor/server.py"
+      - "--catalog"
+      - "/path/to/inspectoor/docs/catalog.json"</pre>
+
+  <h3>Including PR Data</h3>
+  <p>To track open pull requests against spec repos (requires a <code>GITHUB_TOKEN</code>):</p>
+  <pre>GITHUB_TOKEN=your_token python3 build.py --all --include-prs</pre>
+
+  <h2>Source</h2>
+  <a class="github-link" href="https://github.com/JasonVranek/inspectoor" target="_blank" rel="noopener">
+    <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+    github.com/JasonVranek/inspectoor
+  </a>
+</div>
+
+</body>
+</html>

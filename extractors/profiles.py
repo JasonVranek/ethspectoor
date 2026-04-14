@@ -27,6 +27,7 @@ class SpecProfile:
     specs_subdir: str = "specs"        # directory containing fork subdirs
     fork_config_path: Optional[str] = None  # e.g. "configs/mainnet.yaml" for CL
     default_fork_order: list = field(default_factory=list)
+    default_branch: str = "main"       # git branch to clone/pull
     first_fork: str = ""               # the "genesis" fork (everything here is new)
 
     # File scanning
@@ -126,6 +127,7 @@ CONSENSUS_SPECS = SpecProfile(
     name="consensus-specs",
     repo="ethereum/consensus-specs",
     source_format="markdown",
+    default_branch="dev",
     github_raw="https://raw.githubusercontent.com/ethereum/consensus-specs/{branch}/specs",
     github_web="https://github.com/ethereum/consensus-specs/blob/{branch}/specs",
     specs_subdir="specs",

@@ -31,6 +31,19 @@ from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
 
 
+# ── Constants ──────────────────────────────────────────────────────────────
+
+SPEC_REPO_MAP = {
+    "consensus-specs": "consensus-specs",
+    "builder-specs": "builder-specs",
+    "relay-specs": "relay-specs",
+    "beacon-apis": "beacon-APIs",
+    "remote-signing-api": "remote-signing-api",
+    "execution-specs": "execution-specs",
+    "execution-apis": "execution-apis",
+}
+
+
 # ── Catalog Store ──────────────────────────────────────────────────────────
 
 class SpecStore:
@@ -49,7 +62,10 @@ class SpecStore:
     def load(self, catalog_path: str):
         """Load the unified catalog."""
         with open(catalog_path) as f:
-            self.catalog = json.load(f)
+            try:
+                self.catalog = json.load(f)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Malformed catalog JSON: {e}") from e
 
         self.items = self.catalog.get("items", {})
         self.specs = self.catalog.get("specs", {})
@@ -63,6 +79,15 @@ class SpecStore:
         for spec_name, spec_data in self.specs.items():
             for ep_key, endpoint in spec_data.get("endpoints", {}).items():
                 self.all_endpoints[ep_key] = (spec_name, endpoint)
+
+        # Pre-build reverse reference index: type_name -> [{spec, item}]
+        self.used_by_index = {}
+        for spec_name, spec_data in self.specs.items():
+            for ref_target, users in spec_data.get("references", {}).items():
+                if ref_target not in self.used_by_index:
+                    self.used_by_index[ref_target] = []
+                for user in users:
+                    self.used_by_index[ref_target].append({"spec": spec_name, "item": user})
 
     # ── PR overlay resolution ────────────────────────────────────────
 
@@ -201,13 +226,8 @@ class SpecStore:
         if name in self.type_map:
             result["canonical_source"] = self.type_map[name]["source"]
 
-        # Reverse references (who uses this type)
-        used_by = []
-        for sname, sdata in self.specs.items():
-            refs = sdata.get("references", {})
-            if name in refs:
-                for user in refs[name]:
-                    used_by.append({"spec": sname, "item": user})
+        # Reverse references (who uses this type) -- pre-built index
+        used_by = self.used_by_index.get(name, [])
         if used_by:
             result["used_by"] = used_by
 
@@ -852,21 +872,10 @@ async def _index_pr(store: SpecStore, catalog_path: str, indexes_dir: Optional[s
     pr_script = str(base_dir / "pr_index.py")
     catalog_script = str(base_dir / "build_catalog.py")
 
-    # Map spec names to repo subdirectories
-    spec_repo_map = {
-        "consensus-specs": "consensus-specs",
-        "builder-specs": "builder-specs",
-        "relay-specs": "relay-specs",
-        "beacon-apis": "beacon-APIs",
-        "remote-signing-api": "remote-signing-api",
-        "execution-specs": "execution-specs",
-        "execution-apis": "execution-apis",
-    }
+    if spec not in SPEC_REPO_MAP:
+        return {"error": f"Unknown spec: {spec}. Available: {', '.join(SPEC_REPO_MAP.keys())}"}
 
-    if spec not in spec_repo_map:
-        return {"error": f"Unknown spec: {spec}. Available: {', '.join(spec_repo_map.keys())}"}
-
-    repo_path = os.path.join(repos_dir, spec_repo_map[spec])
+    repo_path = os.path.join(repos_dir, SPEC_REPO_MAP[spec])
     if not os.path.isdir(repo_path):
         return {"error": f"Repo not found: {repo_path}"}
 
@@ -952,29 +961,19 @@ async def _reindex(store: SpecStore, catalog_path: str, indexes_dir: Optional[st
     link_script = str(base_dir / "link.py")
     catalog_script = str(base_dir / "build_catalog.py")
 
-    spec_repo_map = {
-        "consensus-specs": "consensus-specs",
-        "builder-specs": "builder-specs",
-        "relay-specs": "relay-specs",
-        "beacon-apis": "beacon-APIs",
-        "remote-signing-api": "remote-signing-api",
-        "execution-specs": "execution-specs",
-        "execution-apis": "execution-apis",
-    }
-
     spec_branches = {
         "consensus-specs": "dev",
     }
 
-    specs_to_build = specs or list(spec_repo_map.keys())
+    specs_to_build = specs or list(SPEC_REPO_MAP.keys())
     results = {}
 
     for spec_name in specs_to_build:
-        if spec_name not in spec_repo_map:
+        if spec_name not in SPEC_REPO_MAP:
             results[spec_name] = {"status": "error", "message": f"Unknown spec: {spec_name}"}
             continue
 
-        repo_path = os.path.join(repos_dir, spec_repo_map[spec_name])
+        repo_path = os.path.join(repos_dir, SPEC_REPO_MAP[spec_name])
         if not os.path.isdir(repo_path):
             results[spec_name] = {"status": "error", "message": f"Repo not found: {repo_path}"}
             continue

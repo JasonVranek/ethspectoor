@@ -389,7 +389,7 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
 }
 .spec-desc {
   font-size: 12px;
-  color: var(--fg-muted);
+  color: var(--text-muted);
   line-height: 1.5;
   margin: 6px 0 10px 0;
 }
@@ -496,7 +496,7 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
   padding: 8px 12px;
   margin: 0 0 4px 0;
   border-left: 2px solid var(--border);
-  background: var(--surface-1);
+  background: var(--surface);
   border-radius: 0 4px 4px 0;
 }
 .diff-item-preview .code-block {
@@ -603,7 +603,7 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
   line-height: 1.6;
   overflow-x: auto;
   white-space: pre;
-  color: var(--fg);
+  color: var(--text);
   tab-size: 4;
   max-height: 600px;
   overflow-y: auto;
@@ -708,6 +708,7 @@ a.type-link.syn-type:hover, a.type-link.syn-func:hover { text-decoration-style: 
       <button class="nav-tab" data-route="#/diff" onclick="navigate('#/diff')">Diff</button>
       <button class="nav-tab" data-route="#/prs" onclick="navigate('#/prs')">PRs</button>
       <button class="nav-tab" onclick="window.location='visualizer.html'">Visualizer</button>
+      <button class="nav-tab" onclick="window.location='about.html'">About</button>
     </div>
     <div class="search-box">
       <input type="text" id="search-input" placeholder="Search types, endpoints...  (/ to focus, Esc to clear)" oninput="onSearchInput(this.value)">
@@ -826,10 +827,7 @@ function buildIndexes() {
         allEndpoints.push({ ...ep, _spec: specName, _key: name, _type: 'endpoint' });
       }
     }
-    if (spec.constants) {
-      for (const [name, c] of Object.entries(spec.constants)) {
-      }
-    }
+
   }
 }
 
@@ -1116,6 +1114,10 @@ function switchForkTab(tabId, fork, btn) {
   btn.style.color = 'var(--accent)';
 }
 
+function safeId(name) { return name.replace(/[^a-zA-Z0-9]/g, '_'); }
+function codePreview(code, extraStyle) {
+  return '<pre class="code-block" style="max-height:400px;font-size:11px' + (extraStyle || '') + '">' + highlightPython(code) + '</pre>';
+}
 function esc(s) {
   if (!s) return '';
   const d = document.createElement('div');
@@ -1593,7 +1595,7 @@ function renderTypeDetailContent(selectedSpec, name) {
   const hasCode = codeForkNames.some(f => getCodeForFork(item, f));
 
   if (hasCode && codeForkNames.length > 0) {
-    const tabId = 'fork-tabs-' + name.replace(/[^a-zA-Z0-9]/g, '_');
+    const tabId = 'fork-tabs-' + safeId(name);
     html += '<div class="detail-section"><h3>Definition' +
       '' +
       '</h3>';
@@ -2144,7 +2146,7 @@ function renderPRBrowser(container, params) {
   // Auto-expand item if specified
   if (expandItem && selectedPR) {
     setTimeout(function() {
-      const itemEl = document.getElementById('pr-item-' + expandItem.replace(/[^a-zA-Z0-9]/g, '_'));
+      const itemEl = document.getElementById('pr-item-' + safeId(expandItem));
       if (itemEl) {
         itemEl.click();
         itemEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -2209,11 +2211,11 @@ function renderPRDetail(pr, expandItem) {
 }
 
 function renderPRItemRow(name, item, pr, action) {
-  const safeId = name.replace(/[^a-zA-Z0-9]/g, '_');
-  const previewId = 'pr-preview-' + safeId;
+  const sid = safeId(name);
+  const previewId = 'pr-preview-' + sid;
   const hasContent = item.code || (action === 'removed' && catalog.items[name]);
 
-  let html = '<div class="pr-item-row" id="pr-item-' + safeId + '"';
+  let html = '<div class="pr-item-row" id="pr-item-' + sid + '"';
   if (hasContent) {
     html += ' onclick="togglePRPreview(this, \'' + esc(name) + '\', ' + pr.number + ', \'' + esc(pr.spec) + '\')"';
   }
@@ -2255,8 +2257,8 @@ function renderPRItemRow(name, item, pr, action) {
 }
 
 function togglePRPreview(el, name, prNumber, specName) {
-  const safeId = name.replace(/[^a-zA-Z0-9]/g, '_');
-  const preview = document.getElementById('pr-preview-' + safeId);
+  const sid = safeId(name);
+  const preview = document.getElementById('pr-preview-' + sid);
   if (!preview) return;
 
   if (preview.style.display !== 'none' && preview.style.display !== '') {
@@ -2460,7 +2462,7 @@ function renderDiffView(container, params) {
       if (groups.added.length) {
         html += '<div class="diff-group"><h3 style="color:var(--green)">✚ Added <span class="count-badge" style="background:rgba(63,185,80,0.15);color:var(--green)">' + groups.added.length + '</span></h3>';
         groups.added.forEach(n => {
-          const itemId = 'diff-preview-' + n.replace(/[^a-zA-Z0-9]/g, '_');
+          const itemId = 'diff-preview-' + safeId(n);
           html += '<div class="diff-item" onclick="toggleDiffPreview(this, \'' + esc(n) + '\', \'' + esc(toFork) + '\', \'' + esc(specName) + '\', null)" style="color:var(--green)">+ ' + esc(n) + '</div>';
           html += '<div class="diff-item-preview" id="' + itemId + '" style="display:none"></div>';
         });
@@ -2469,7 +2471,7 @@ function renderDiffView(container, params) {
       if (groups.modified.length) {
         html += '<div class="diff-group"><h3 style="color:var(--orange)">✎ Modified <span class="count-badge" style="background:rgba(210,153,34,0.15);color:var(--orange)">' + groups.modified.length + '</span></h3>';
         groups.modified.forEach(n => {
-          const itemId = 'diff-preview-' + n.replace(/[^a-zA-Z0-9]/g, '_');
+          const itemId = 'diff-preview-' + safeId(n);
           html += '<div class="diff-item" onclick="toggleDiffPreview(this, \'' + esc(n) + '\', \'' + esc(toFork) + '\', \'' + esc(specName) + '\', \'' + esc(fromFork) + '\')" style="color:var(--orange)">~ ' + esc(n) + '</div>';
           html += '<div class="diff-item-preview" id="' + itemId + '" style="display:none"></div>';
         });
@@ -2478,7 +2480,7 @@ function renderDiffView(container, params) {
       if (groups.removed.length) {
         html += '<div class="diff-group"><h3 style="color:var(--red)">✖ Removed <span class="count-badge" style="background:rgba(248,81,73,0.15);color:var(--red)">' + groups.removed.length + '</span></h3>';
         groups.removed.forEach(n => {
-          const itemId = 'diff-preview-' + n.replace(/[^a-zA-Z0-9]/g, '_');
+          const itemId = 'diff-preview-' + safeId(n);
           html += '<div class="diff-item" style="color:var(--red);text-decoration:line-through">- ' + esc(n) + '</div>';
           html += '<div class="diff-item-preview" id="' + itemId + '" style="display:none"></div>';
         });
@@ -2505,7 +2507,7 @@ function renderDiffView(container, params) {
       html += '<div class="diff-group">';
       html += '<h3 style="color:var(--green)">✚ New in ' + esc(toFork) + ' <span class="count-badge" style="background:rgba(63,185,80,0.15);color:var(--green)">' + newItems.length + '</span></h3>';
       newItems.forEach(name => {
-        const itemId = 'diff-preview-' + name.replace(/[^a-zA-Z0-9]/g, '_');
+        const itemId = 'diff-preview-' + safeId(name);
         html += '<div class="diff-item" onclick="toggleDiffPreview(this, \'' + esc(name) + '\', \'' + esc(toFork) + '\', \'' + esc(specName) + '\', null)" style="color:var(--green)">' +
           '+ ' + esc(name) + '</div>';
         html += '<div class="diff-item-preview" id="' + itemId + '" style="display:none"></div>';
@@ -2517,7 +2519,7 @@ function renderDiffView(container, params) {
       html += '<div class="diff-group">';
       html += '<h3 style="color:var(--orange)">✎ Modified in ' + esc(toFork) + ' <span class="count-badge" style="background:rgba(210,153,34,0.15);color:var(--orange)">' + modifiedItems.length + '</span></h3>';
       modifiedItems.forEach(name => {
-        const itemId = 'diff-preview-' + name.replace(/[^a-zA-Z0-9]/g, '_');
+        const itemId = 'diff-preview-' + safeId(name);
         html += '<div class="diff-item" onclick="toggleDiffPreview(this, \'' + esc(name) + '\', \'' + esc(toFork) + '\', \'' + esc(specName) + '\', \'' + esc(fromFork) + '\')" style="color:var(--orange)">' +
           '~ ' + esc(name) + '</div>';
         html += '<div class="diff-item-preview" id="' + itemId + '" style="display:none"></div>';
@@ -2529,7 +2531,7 @@ function renderDiffView(container, params) {
       html += '<div class="diff-group">';
       html += '<h3 style="color:var(--cyan)">⚡ New Methods in ' + esc(toFork) + ' <span class="count-badge" style="background:rgba(57,210,192,0.15);color:var(--cyan)">' + newMethods.length + '</span></h3>';
       newMethods.forEach(name => {
-        const itemId = 'diff-preview-' + name.replace(/[^a-zA-Z0-9]/g, '_');
+        const itemId = 'diff-preview-' + safeId(name);
         html += '<div class="diff-item" onclick="toggleDiffPreview(this, \'' + esc(name) + '\', \'' + esc(toFork) + '\', \'' + esc(specName) + '\', null)" style="color:var(--cyan)">' +
           '+ ' + esc(name) + '</div>';
         html += '<div class="diff-item-preview" id="' + itemId + '" style="display:none"></div>';
@@ -2581,7 +2583,7 @@ function renderDiffView(container, params) {
 
 
 function toggleDiffPreview(el, name, toFork, specName, fromFork) {
-  const previewId = 'diff-preview-' + name.replace(/[^a-zA-Z0-9]/g, '_');
+  const previewId = 'diff-preview-' + safeId(name);
   const preview = document.getElementById(previewId);
   if (!preview) return;
 
