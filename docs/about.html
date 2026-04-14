@@ -205,6 +205,153 @@ pre {
   text-decoration: none;
 }
 
+
+/* Skill card */
+.skill-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 12px 0 24px;
+  transition: border-color 0.15s;
+}
+.skill-card:hover { border-color: var(--accent); }
+.skill-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.skill-card-title {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.skill-card-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.skill-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.skill-btn {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 6px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.skill-btn:hover { border-color: var(--accent); color: var(--accent); }
+.skill-btn-copy.copied { border-color: var(--green); color: var(--green); }
+
+/* Skill modal */
+.skill-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+}
+.skill-modal-overlay.open { display: flex; }
+.skill-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 860px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.skill-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.skill-modal-title {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.skill-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+.skill-modal-close:hover { color: var(--text); }
+.skill-modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.skill-modal-body h1 { font-size: 22px; margin: 24px 0 8px; font-family: var(--font-mono); color: var(--accent); }
+.skill-modal-body h2 { font-size: 17px; margin: 20px 0 8px; font-family: var(--font-mono); color: var(--accent); }
+.skill-modal-body h3 { font-size: 14px; margin: 16px 0 6px; font-family: var(--font-mono); color: var(--text); }
+.skill-modal-body p { margin: 8px 0; }
+.skill-modal-body ul, .skill-modal-body ol { margin: 8px 0; padding-left: 24px; }
+.skill-modal-body li { margin: 4px 0; }
+.skill-modal-body code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: var(--bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--accent);
+}
+.skill-modal-body pre {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  overflow-x: auto;
+  margin: 8px 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.skill-modal-body pre code {
+  background: none;
+  padding: 0;
+  color: var(--text);
+}
+.skill-modal-body table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0;
+  font-size: 13px;
+}
+.skill-modal-body th, .skill-modal-body td {
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  text-align: left;
+}
+.skill-modal-body th { background: var(--bg); color: var(--text-muted); font-weight: 600; }
+.skill-modal-body strong { color: var(--text); font-weight: 600; }
+.skill-modal-body a { color: var(--accent); }
+.skill-modal-body hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
 @media (max-width: 600px) {
   .header { gap: 6px; padding: 0 8px; }
   .nav-tabs { display: none; }
@@ -359,12 +506,134 @@ python3 server.py --catalog docs/catalog.json</pre>
   <p>To track open pull requests against spec repos (requires a <code>GITHUB_TOKEN</code>):</p>
   <pre>GITHUB_TOKEN=your_token python3 build.py --all --include-prs</pre>
 
+
+  <h2>Agent Skill</h2>
+  <p>Teach your AI agent how to use the Inspectoor MCP effectively. This skill document
+  covers tool workflows, query patterns, and the mental model for navigating Ethereum specs.</p>
+
+  <div class="skill-card">
+    <div class="skill-card-header">
+      <div>
+        <div class="skill-card-title">Inspectoor MCP Skill</div>
+        <div class="skill-card-desc">Complete guide for AI agents: 10 tools, 5 workflow patterns, spec navigation tips</div>
+      </div>
+      <div class="skill-card-actions">
+        <button class="skill-btn" onclick="viewSkill()">View</button>
+        <button class="skill-btn skill-btn-copy" onclick="copySkill(this)">Copy to Clipboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skill Modal -->
+  <div class="skill-modal-overlay" id="skill-modal" onclick="if(event.target===this)closeSkillModal()">
+    <div class="skill-modal">
+      <div class="skill-modal-header">
+        <span class="skill-modal-title">Inspectoor MCP Skill</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="skill-btn skill-btn-copy" onclick="copySkill(this)" style="font-size:12px;padding:4px 10px">Copy Raw</button>
+          <a href="https://github.com/JasonVranek/inspectoor/blob/main/docs/SKILL.md" target="_blank" rel="noopener" class="skill-btn" style="font-size:12px;padding:4px 10px;text-decoration:none;color:var(--text)">Edit on GitHub</a>
+          <button class="skill-modal-close" onclick="closeSkillModal()">&times;</button>
+        </div>
+      </div>
+      <div class="skill-modal-body" id="skill-modal-body">
+        <div style="color:var(--text-dim);padding:20px;text-align:center">Loading...</div>
+      </div>
+    </div>
+  </div>
+
   <h2>Source</h2>
   <a class="github-link" href="https://github.com/JasonVranek/inspectoor" target="_blank" rel="noopener">
     <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
     github.com/JasonVranek/inspectoor
   </a>
 </div>
+
+
+<script>
+let skillMdRaw = null;
+
+async function fetchSkillMd() {
+  if (skillMdRaw) return skillMdRaw;
+  const resp = await fetch('SKILL.md');
+  if (!resp.ok) throw new Error('Failed to load SKILL.md');
+  skillMdRaw = await resp.text();
+  return skillMdRaw;
+}
+
+function renderMarkdown(md) {
+  let html = md;
+  // Code blocks (```...```)
+  html = html.replace(/```([\s\S]*?)```/g, function(m, code) {
+    return '<pre><code>' + code.replace(/^\w*\n/, '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</code></pre>';
+  });
+  // Tables
+  html = html.replace(/(\|.+\|\n)(\|[-| :]+\|\n)((?:\|.+\|\n?)+)/g, function(m, header, sep, body) {
+    let t = '<table><thead><tr>';
+    header.trim().split('|').filter(Boolean).forEach(function(c) { t += '<th>' + c.trim() + '</th>'; });
+    t += '</tr></thead><tbody>';
+    body.trim().split('\n').forEach(function(row) {
+      t += '<tr>';
+      row.split('|').filter(Boolean).forEach(function(c) { t += '<td>' + c.trim() + '</td>'; });
+      t += '</tr>';
+    });
+    t += '</tbody></table>';
+    return t;
+  });
+  // Headings
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+  // Horizontal rules
+  html = html.replace(/^---+$/gm, '<hr>');
+  // Bold
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Inline code (after code blocks to avoid conflicts)
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // Links
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  // Unordered lists
+  html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+  // Paragraphs (lines that aren't already wrapped)
+  html = html.replace(/^(?!<[hupltao]|$)(.+)$/gm, '<p>$1</p>');
+  // Clean up extra newlines
+  html = html.replace(/\n{2,}/g, '\n');
+  return html;
+}
+
+async function viewSkill() {
+  try {
+    const md = await fetchSkillMd();
+    document.getElementById('skill-modal-body').innerHTML = renderMarkdown(md);
+    document.getElementById('skill-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  } catch (e) {
+    alert('Could not load SKILL.md: ' + e.message);
+  }
+}
+
+function closeSkillModal() {
+  document.getElementById('skill-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function copySkill(btn) {
+  try {
+    const md = await fetchSkillMd();
+    await navigator.clipboard.writeText(md);
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(function() { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+  } catch (e) {
+    alert('Copy failed: ' + e.message);
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeSkillModal();
+});
+</script>
 
 </body>
 </html>
