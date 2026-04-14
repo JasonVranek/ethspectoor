@@ -549,7 +549,12 @@ function showDetail(node) {
       <div class="field-value"><a href="${node.github}" target="_blank">${node.github}</a></div>
     </div>
   `;
-  actions.innerHTML = `<a href="index.html#/endpoint/${node.spec}/${node.label}">View in Explorer &rarr;</a>`;
+  // Link to the right explorer view based on spec type
+  const isTypeSpec = node.spec === 'consensus-specs' || node.spec === 'execution-specs';
+  const explorerUrl = isTypeSpec
+    ? 'index.html#/type/' + encodeURIComponent(node.label)
+    : 'index.html#/endpoints?spec=' + encodeURIComponent(node.spec) + '&q=' + encodeURIComponent(node.label);
+  actions.innerHTML = '<a href="' + explorerUrl + '">View in Explorer &rarr;</a>';
   panel.classList.add('open');
 }
 

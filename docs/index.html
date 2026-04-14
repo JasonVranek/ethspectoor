@@ -866,6 +866,14 @@ function route() {
     document.querySelector('[data-route="#/prs"]').classList.add('active');
   }
 
+  // Apply search query from URL params
+  const _params = parseParams(hash);
+  if (_params.q) {
+    searchQuery = decodeURIComponent(_params.q);
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) searchInput.value = searchQuery;
+  }
+
   // Parse route
   if (hash === '#/' || hash === '#/specs' || hash === '') {
     renderSpecsOverview(main);
