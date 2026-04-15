@@ -703,6 +703,13 @@ a.type-link.syn-type:hover, a.type-link.syn-func:hover { text-decoration-style: 
 .diff-line-removed { background: rgba(248,81,73,0.12); display: block; margin: 0 -12px; padding: 0 12px; border-left: 3px solid var(--red); }
 .diff-line-changed { background: rgba(210,153,34,0.10); display: block; margin: 0 -12px; padding: 0 12px; border-left: 3px solid var(--orange); }
 .diff-line-unchanged { display: block; margin: 0 -12px; padding: 0 12px; border-left: 3px solid transparent; }
+.fork-diff-toggle {
+  font-size: 11px; padding: 3px 10px; cursor: pointer;
+  background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border);
+  border-radius: 4px; font-family: var(--font-mono); transition: all 0.15s;
+}
+.fork-diff-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.fork-diff-toggle.active { background: rgba(88,166,255,0.1); border-color: var(--accent); color: var(--accent); }
 .diff-word-added { background: rgba(63,185,80,0.25); border-radius: 2px; padding: 0 1px; }
 .diff-word-removed { background: rgba(248,81,73,0.25); border-radius: 2px; padding: 0 1px; text-decoration: line-through; }
 </style>
@@ -1128,6 +1135,15 @@ function switchForkTab(tabId, fork, btn) {
     const show = el.dataset.fork === fork;
     el.style.display = show ? '' : 'none';
     if (show && el.dataset.githubUrl) githubUrl = el.dataset.githubUrl;
+    // Reset diff toggle when switching tabs
+    if (show) {
+      const diffToggle = el.querySelector('.fork-diff-toggle');
+      const codeDiv = el.querySelector('[id^="code-view-"]');
+      const diffDiv = el.querySelector('[id^="diff-view-"]');
+      if (diffToggle) diffToggle.classList.remove('active');
+      if (codeDiv) codeDiv.style.display = '';
+      if (diffDiv) diffDiv.style.display = 'none';
+    }
   });
   // Update View Source button
   const sourceBtn = document.getElementById('source-btn');
@@ -1142,6 +1158,22 @@ function switchForkTab(tabId, fork, btn) {
   });
   btn.style.borderColor = 'var(--accent)';
   btn.style.color = 'var(--accent)';
+}
+
+function toggleForkDiff(codeViewId, diffViewId, btn) {
+  const codeView = document.getElementById(codeViewId);
+  const diffView = document.getElementById(diffViewId);
+  if (!codeView || !diffView) return;
+  const showingDiff = diffView.style.display !== 'none';
+  if (showingDiff) {
+    codeView.style.display = '';
+    diffView.style.display = 'none';
+    btn.classList.remove('active');
+  } else {
+    codeView.style.display = 'none';
+    diffView.style.display = '';
+    btn.classList.add('active');
+  }
 }
 
 function safeId(name) { return name.replace(/[^a-zA-Z0-9]/g, '_'); }
@@ -1648,10 +1680,29 @@ function renderTypeDetailContent(selectedSpec, name) {
       const fd = item.forks[f];
       const isLast = i === codeForkNames.length - 1;
       const forkGithubUrl = (item.forks[f] && item.forks[f].github_url) || '';
+      // Find previous fork's code for diffing
+      const prevFork = i > 0 ? codeForkNames[i - 1] : null;
+      const prevCode = prevFork ? getCodeForFork(item, prevFork) : null;
+      const hasDiffable = prevCode && code && prevCode !== code;
+      const diffBtnId = 'diff-btn-' + safeId(name) + '-' + safeId(f);
+      const codeViewId = 'code-view-' + safeId(name) + '-' + safeId(f);
+      const diffViewId = 'diff-view-' + safeId(name) + '-' + safeId(f);
+
       html += '<div class="fork-code-block" data-tabs="' + esc(tabId) + '" data-fork="' + esc(f) + '" data-github-url="' + esc(forkGithubUrl) + '" style="' + (isLast ? '' : 'display:none') + '">';
 
+      if (hasDiffable) {
+        html += '<div style="display:flex;justify-content:flex-end;margin-bottom:6px">';
+        html += '<button id="' + diffBtnId + '" class="fork-diff-toggle" onclick="toggleForkDiff(\'' + esc(codeViewId) + '\', \'' + esc(diffViewId) + '\', this)">';
+        html += 'diff vs ' + esc(prevFork);
+        html += '</button>';
+        html += '</div>';
+      }
+
       if (code) {
-        html += '<pre class="code-block" style="max-height:600px">' + highlightPython(code) + '</pre>';
+        html += '<div id="' + codeViewId + '"><pre class="code-block" style="max-height:600px">' + highlightPython(code) + '</pre></div>';
+        if (hasDiffable) {
+          html += '<div id="' + diffViewId + '" style="display:none">' + renderDiffCodeBlocks(prevCode, code, esc(prevFork), esc(f)) + '</div>';
+        }
       } else {
         html += '<div style="padding:12px;color:var(--text-dim);font-size:12px">No definition in this fork.</div>';
       }
