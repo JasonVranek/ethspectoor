@@ -27,9 +27,10 @@ open `docs/index.html` locally. No build step, no dependencies.
 - **PRs** -- browse indexed open pull requests against spec repos. Each PR shows
   which types it adds, modifies, or removes with inline diff previews against
   mainline.
-- **Visualizer** (`visualizer.html`) -- interactive transaction lifecycle diagram
-  showing how data flows between consensus, execution, builder, relay, and signer
-  across 18 protocol endpoints.
+- **Visualizer** (`visualizer.html`) -- fork-aware transaction lifecycle diagram.
+  Shows the PBS data flow (consensus, execution, builder, relay, sidecar) for
+  deneb through fulu, and switches to the ePBS path (EIP-7732) for gloas with
+  P2P bid gossip, payload revelation, and PTC voting.
 - **About** (`about.html`) -- overview of the project, tools, and setup for
   first-time visitors.
 
@@ -301,13 +302,45 @@ python3 build_catalog.py --indexes-dir ./indexes --output docs/catalog.json
 ├── indexes/                  # generated per-spec indexes (intermediate build artifacts)
 │   └── pr/                   # PR overlay indexes (per-spec, per-PR)
 ├── docs/
-│   ├── index.html            # explorer SPA (types, endpoints, diff, PRs, search)
-│   ├── visualizer.html       # transaction lifecycle diagram
-│   ├── about.html            # project overview for visitors
-│   └── catalog.json          # canonical data (from build_catalog.py)
+│   ├── index.html            # HTML shell (loads app.js, no inline logic)
+│   ├── about.html            # project overview, MCP docs, skill card
+│   ├── visualizer.html       # fork-aware transaction lifecycle diagram (PBS + ePBS)
+│   ├── catalog.json          # canonical data (from build_catalog.py)
+│   ├── SKILL.md              # MCP skill document for AI agents
+│   ├── logo.svg              # site logo
+│   ├── favicon.svg           # browser tab icon
+│   ├── css/
+│   │   ├── styles.css        # shared styles (layout, nav, search, detail panels)
+│   │   ├── about.css         # about page styles
+│   │   └── visualizer.css    # visualizer page styles
+│   ├── js/
+│   │   ├── app.js            # entry point (init, routing, global bindings)
+│   │   ├── state.js          # shared state (catalog data, selections)
+│   │   ├── constants.js      # fork orders, spec colors, kind/method badges
+│   │   ├── utils.js          # HTML escaping, ID sanitization
+│   │   ├── forks.js          # fork sorting, code-for-fork resolution
+│   │   ├── search.js         # fuzzy scoring and highlighting
+│   │   ├── diff.js           # LCS-based line diff engine
+│   │   ├── router.js         # hash-based routing and navigation
+│   │   ├── url.js            # URL parameter parsing
+│   │   └── views/
+│   │       ├── home.js       # specs overview + setup/MCP/skill sections
+│   │       ├── types.js      # type browser (three-panel, filters, detail)
+│   │       ├── endpoints.js  # endpoint browser
+│   │       ├── prs.js        # PR browser with inline diffs
+│   │       ├── diff-view.js  # fork-to-fork diff comparison
+│   │       └── skill-modal.js # SKILL.md viewer/copy modal
+│   └── js/__tests__/
+│       ├── constants.test.js
+│       ├── diff.test.js
+│       ├── forks.test.js
+│       ├── router.test.js
+│       ├── search.test.js
+│       └── utils.test.js
 ├── .github/workflows/
-│   └── deploy.yml            # CI: rebuild catalog + deploy to GitHub Pages
+│   └── deploy.yml            # CI: deno test -> rebuild catalog -> deploy to GitHub Pages
 ├── SCHEMA.md                 # index JSON schema documentation
+├── CLAUDE.md                 # agent context (enzyme CLI, project conventions)
 └── PLAN.md                   # development roadmap
 ```
 
