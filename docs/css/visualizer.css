@@ -28,7 +28,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-sans); mi
 
 /* Main area */
 .main-area { flex:1; overflow:auto; position:relative; }
-.svg-container { min-width:2100px; min-height:680px; padding:0; }
+.svg-container { min-width:2800px; min-height:680px; padding:0; }
 
 /* SVG styles */
 svg text { font-family: var(--font-sans); }

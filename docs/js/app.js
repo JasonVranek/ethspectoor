@@ -1,4 +1,4 @@
-// --- The Inspectoor — App Entry Point ---
+// --- The Ethspectoor — App Entry Point ---
 import { state } from './state.js';
 import { navigate, route, parseParams } from './router.js';
 import { fuzzyScore, filterDiffItems } from './search.js';

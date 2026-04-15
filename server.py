@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-The Inspectoor MCP Server.
+The Ethspectoor MCP Server.
 
 Serves Ethereum spec data over MCP (Model Context Protocol).
 Loads a pre-built catalog.json on startup, answers structured queries
@@ -530,7 +530,7 @@ class SpecStore:
 def create_server(store: SpecStore, catalog_path: str, indexes_dir: Optional[str] = None, repos_dir: Optional[str] = None) -> Server:
     """Create the MCP server with all tool registrations."""
 
-    server = Server("inspectoor")
+    server = Server("ethspectoor")
 
     @server.list_tools()
     async def handle_list_tools() -> list[Tool]:
@@ -1039,7 +1039,7 @@ async def _reindex(store: SpecStore, catalog_path: str, indexes_dir: Optional[st
 # ── Main ───────────────────────────────────────────────────────────────────
 
 async def main():
-    parser = argparse.ArgumentParser(description="The Inspectoor MCP Server")
+    parser = argparse.ArgumentParser(description="The Ethspectoor MCP Server")
     parser.add_argument("--catalog", default="./docs/catalog.json",
                         help="Path to catalog.json (default: ./docs/catalog.json)")
     parser.add_argument("--indexes-dir", default="./indexes",

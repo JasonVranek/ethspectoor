@@ -440,8 +440,8 @@ def index_single_pr(spec_name: str, repo_dir: str, pr_meta: dict,
         return None
 
     # Create worktree in temp dir
-    work_dir = tempfile.mkdtemp(prefix=f"inspectoor-pr-{spec_name}-{pr_number}-")
-    tmp_output = tempfile.mkdtemp(prefix=f"inspectoor-pr-output-{pr_number}-")
+    work_dir = tempfile.mkdtemp(prefix=f"ethspectoor-pr-{spec_name}-{pr_number}-")
+    tmp_output = tempfile.mkdtemp(prefix=f"ethspectoor-pr-output-{pr_number}-")
 
     try:
         print(f"  Extracting PR #{pr_number} into worktree...", file=sys.stderr)

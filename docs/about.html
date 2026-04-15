@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>About — The Inspectoor</title>
+<title>About — The Ethspectoor</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="stylesheet" href="css/about.css">
@@ -11,7 +11,7 @@
 <body>
 
 <div class="header">
-  <a class="logo" href="index.html"><img src="logo.svg" alt="" style="height:20px;vertical-align:middle;margin-right:4px"> The <span class="accent">Inspectoor</span></a>
+  <a class="logo" href="index.html"><img src="logo.svg" alt="" style="height:20px;vertical-align:middle;margin-right:4px"> The <span class="accent">Ethspectoor</span></a>
   <div class="nav-tabs">
     <a class="nav-tab" href="index.html#/">Home</a>
     <a class="nav-tab" href="index.html#/types">Types</a>
@@ -24,10 +24,10 @@
 </div>
 
 <div class="content">
-  <h1><img src="logo.svg" alt="" style="height:28px;vertical-align:middle;margin-right:6px"> The <span style="color:var(--accent)">Inspectoor</span></h1>
+  <h1><img src="logo.svg" alt="" style="height:28px;vertical-align:middle;margin-right:6px"> The <span style="color:var(--accent)">Ethspectoor</span></h1>
   <p class="subtitle">Deterministic extraction and exploration of all Ethereum specification data.</p>
 
-  <p>The Inspectoor parses every Ethereum spec repo and builds a structured index of types, endpoints, constants, presets, and containers. It tracks changes across forks, diffs fields between versions, and makes everything searchable through a browser UI and an MCP server for AI agents.</p>
+  <p>The Ethspectoor parses every Ethereum spec repo and builds a structured index of types, endpoints, constants, presets, and containers. It tracks changes across forks, diffs fields between versions, and makes everything searchable through a browser UI and an MCP server for AI agents.</p>
 
   <h2>Indexed Specifications</h2>
   <div class="spec-list">
@@ -69,7 +69,7 @@
   </div>
 
   <h2>MCP Server</h2>
-  <p>The Inspectoor includes a Model Context Protocol (MCP) server so AI agents (Claude, Cursor, Windsurf, etc.) can query Ethereum spec data programmatically. Connect it to any MCP-compatible client and your agent gets direct access to the full spec index.</p>
+  <p>The Ethspectoor includes a Model Context Protocol (MCP) server so AI agents (Claude, Cursor, Windsurf, etc.) can query Ethereum spec data programmatically. Connect it to any MCP-compatible client and your agent gets direct access to the full spec index.</p>
 
   <h3>Available Tools</h3>
   <div class="tool-grid">
@@ -113,8 +113,8 @@
 
   <h2>Setup</h2>
   <p>Requires Python 3.10+ and git. One command builds everything.</p>
-  <pre>git clone https://github.com/JasonVranek/inspectoor
-cd inspectoor
+  <pre>git clone https://github.com/JasonVranek/ethspectoor
+cd ethspectoor
 
 # Install dependencies
 pip install pyyaml mcp
@@ -136,7 +136,7 @@ python3 server.py --catalog docs/catalog.json</pre>
 
   <p>For MCP client configuration (Claude Desktop, Hermes, Cursor), add to your config:</p>
   <pre>mcp:
-  inspectoor:
+  ethspectoor:
     command: "uv"
     args:
       - "run"
@@ -145,9 +145,9 @@ python3 server.py --catalog docs/catalog.json</pre>
       - "--with"
       - "pyyaml"
       - "python3"
-      - "/path/to/inspectoor/server.py"
+      - "/path/to/ethspectoor/server.py"
       - "--catalog"
-      - "/path/to/inspectoor/docs/catalog.json"</pre>
+      - "/path/to/ethspectoor/docs/catalog.json"</pre>
 
   <h3>Including PR Data</h3>
   <p>To track open pull requests against spec repos (requires a <code>GITHUB_TOKEN</code>):</p>
@@ -155,13 +155,13 @@ python3 server.py --catalog docs/catalog.json</pre>
 
 
   <h2>Agent Skill</h2>
-  <p>Teach your AI agent how to use the Inspectoor MCP effectively. This skill document
+  <p>Teach your AI agent how to use the Ethspectoor MCP effectively. This skill document
   covers tool workflows, query patterns, and the mental model for navigating Ethereum specs.</p>
 
   <div class="skill-card">
     <div class="skill-card-header">
       <div>
-        <div class="skill-card-title">Inspectoor MCP Skill</div>
+        <div class="skill-card-title">Ethspectoor MCP Skill</div>
         <div class="skill-card-desc">Complete guide for AI agents: 10 tools, 5 workflow patterns, spec navigation tips</div>
       </div>
       <div class="skill-card-actions">
@@ -175,10 +175,10 @@ python3 server.py --catalog docs/catalog.json</pre>
   <div class="skill-modal-overlay" id="skill-modal" onclick="if(event.target===this)closeSkillModal()">
     <div class="skill-modal">
       <div class="skill-modal-header">
-        <span class="skill-modal-title">Inspectoor MCP Skill</span>
+        <span class="skill-modal-title">Ethspectoor MCP Skill</span>
         <div style="display:flex;gap:8px;align-items:center">
           <button class="skill-btn skill-btn-copy" onclick="copySkill(this)" style="font-size:12px;padding:4px 10px">Copy Raw</button>
-          <a href="https://github.com/JasonVranek/inspectoor/blob/main/docs/SKILL.md" target="_blank" rel="noopener" class="skill-btn" style="font-size:12px;padding:4px 10px;text-decoration:none;color:var(--text)">Edit on GitHub</a>
+          <a href="https://github.com/JasonVranek/ethspectoor/blob/main/docs/SKILL.md" target="_blank" rel="noopener" class="skill-btn" style="font-size:12px;padding:4px 10px;text-decoration:none;color:var(--text)">Edit on GitHub</a>
           <button class="skill-modal-close" onclick="closeSkillModal()">&times;</button>
         </div>
       </div>
@@ -189,9 +189,9 @@ python3 server.py --catalog docs/catalog.json</pre>
   </div>
 
   <h2>Source</h2>
-  <a class="github-link" href="https://github.com/JasonVranek/inspectoor" target="_blank" rel="noopener">
+  <a class="github-link" href="https://github.com/JasonVranek/ethspectoor" target="_blank" rel="noopener">
     <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-    github.com/JasonVranek/inspectoor
+    github.com/JasonVranek/ethspectoor
   </a>
 </div>
 

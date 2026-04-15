@@ -15,7 +15,7 @@ export function renderSpecsOverview(container) {
   let html = '<div class="panel-full">';
 
   // Hero
-  html += '<h1 style="font-size:24px;margin-bottom:8px;font-family:var(--font-mono)"><img src="logo.svg" alt="" style="height:28px;vertical-align:middle;margin-right:6px"> The <span style="color:var(--accent)">Inspectoor</span></h1>';
+  html += '<h1 style="font-size:24px;margin-bottom:8px;font-family:var(--font-mono)"><img src="logo.svg" alt="" style="height:28px;vertical-align:middle;margin-right:6px"> The <span style="color:var(--accent)">Ethspectoor</span></h1>';
   html += '<p style="color:var(--text-muted);margin-bottom:20px;font-size:14px">Deterministic extraction and exploration of all Ethereum specification data.</p>';
 
   // Stats bar
@@ -64,7 +64,7 @@ export function renderSpecsOverview(container) {
   // MCP Server
   html += '<div class="home-section">';
   html += '<h2>MCP Server</h2>';
-  html += '<p>The Inspectoor includes a Model Context Protocol (MCP) server so AI agents (Claude, Cursor, Windsurf, etc.) can query Ethereum spec data programmatically. Connect it to any MCP-compatible client and your agent gets direct access to the full spec index.</p>';
+  html += '<p>The Ethspectoor includes a Model Context Protocol (MCP) server so AI agents (Claude, Cursor, Windsurf, etc.) can query Ethereum spec data programmatically. Connect it to any MCP-compatible client and your agent gets direct access to the full spec index.</p>';
   html += '<div class="tool-grid">';
   var tools = [
     ['lookup_type', 'Get full definition of a type by name and fork'],
@@ -86,13 +86,13 @@ export function renderSpecsOverview(container) {
   html += '<div class="home-section">';
   html += '<h2>Setup</h2>';
   html += '<p>Requires Python 3.10+ and git. One command builds everything.</p>';
-  html += '<pre>git clone https://github.com/JasonVranek/inspectoor\ncd inspectoor\n\n# Install dependencies\npip install pyyaml mcp\n\n# Build everything: clones all 7 spec repos, extracts, links, builds catalog\npython3 build.py --all\n\n# Open the explorer\nopen docs/index.html</pre>';
+  html += '<pre>git clone https://github.com/JasonVranek/ethspectoor\ncd ethspectoor\n\n# Install dependencies\npip install pyyaml mcp\n\n# Build everything: clones all 7 spec repos, extracts, links, builds catalog\npython3 build.py --all\n\n# Open the explorer\nopen docs/index.html</pre>';
   html += '<p>That\'s it. <code>build.py --all</code> clones all spec repos to <code>./repos/specs/</code>, builds per-spec indexes, runs cross-reference linking, and assembles the catalog. First run takes a few minutes to clone. Subsequent runs pull updates and rebuild.</p>';
   html += '<h3>MCP Server</h3>';
   html += '<p>Start the MCP server for AI agent integration:</p>';
   html += '<pre># Start the server (stdio transport)\npython3 server.py --catalog docs/catalog.json</pre>';
   html += '<p>For MCP client configuration (Claude Desktop, Hermes, Cursor), add to your config:</p>';
-  html += '<pre>mcp:\n  inspectoor:\n    command: "uv"\n    args:\n      - "run"\n      - "--with"\n      - "mcp"\n      - "--with"\n      - "pyyaml"\n      - "python3"\n      - "/path/to/inspectoor/server.py"\n      - "--catalog"\n      - "/path/to/inspectoor/docs/catalog.json"</pre>';
+  html += '<pre>mcp:\n  ethspectoor:\n    command: "uv"\n    args:\n      - "run"\n      - "--with"\n      - "mcp"\n      - "--with"\n      - "pyyaml"\n      - "python3"\n      - "/path/to/ethspectoor/server.py"\n      - "--catalog"\n      - "/path/to/ethspectoor/docs/catalog.json"</pre>';
   html += '<h3>Including PR Data</h3>';
   html += '<p>To track open pull requests against spec repos (requires a <code>GITHUB_TOKEN</code>):</p>';
   html += '<pre>GITHUB_TOKEN=*** python3 build.py --all --include-prs</pre>';
@@ -101,9 +101,9 @@ export function renderSpecsOverview(container) {
   // Agent Skill
   html += '<div class="home-section">';
   html += '<h2>Agent Skill</h2>';
-  html += '<p>Teach your AI agent how to use the Inspectoor MCP effectively. This skill document covers tool workflows, query patterns, and the mental model for navigating Ethereum specs.</p>';
+  html += '<p>Teach your AI agent how to use the Ethspectoor MCP effectively. This skill document covers tool workflows, query patterns, and the mental model for navigating Ethereum specs.</p>';
   html += '<div class="skill-card"><div class="skill-card-header"><div>';
-  html += '<div class="skill-card-title">Inspectoor MCP Skill</div>';
+  html += '<div class="skill-card-title">Ethspectoor MCP Skill</div>';
   html += '<div class="skill-card-desc">Complete guide for AI agents: 10 tools, 5 workflow patterns, spec navigation tips</div>';
   html += '</div><div class="skill-card-actions">';
   html += '<button class="skill-btn" onclick="viewSkill()">View</button>';
@@ -114,9 +114,9 @@ export function renderSpecsOverview(container) {
   // GitHub link
   html += '<div class="home-section">';
   html += '<h2>Source</h2>';
-  html += '<a class="home-github-link" href="https://github.com/JasonVranek/inspectoor" target="_blank" rel="noopener">';
+  html += '<a class="home-github-link" href="https://github.com/JasonVranek/ethspectoor" target="_blank" rel="noopener">';
   html += '<svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>';
-  html += 'github.com/JasonVranek/inspectoor';
+  html += 'github.com/JasonVranek/ethspectoor';
   html += '</a>';
   html += '</div>';
 

@@ -1,4 +1,4 @@
-# The Inspectoor
+# The Ethspectoor
 
 Deterministic extraction and exploration of Ethereum specification data. Parses
 every spec repo (consensus, execution, builder, relay, beacon APIs, execution
@@ -9,7 +9,7 @@ static explorer UI.
 
 ## Live Explorer
 
-**[inspectoor.blockspaceforum.com](https://inspectoor.blockspaceforum.com)** or
+**[ethspectoor.blockspaceforum.com](https://ethspectoor.blockspaceforum.com)** or
 open `docs/index.html` locally. No build step, no dependencies.
 
 ### Tabs
@@ -121,7 +121,7 @@ uv run --with mcp --with pyyaml python3 server.py --catalog docs/catalog.json
 
 ```yaml
 mcp:
-  inspectoor:
+  ethspectoor:
     command: "uv"
     args:
       - "run"
@@ -130,13 +130,13 @@ mcp:
       - "--with"
       - "pyyaml"
       - "python3"
-      - "/path/to/inspectoor/server.py"
+      - "/path/to/ethspectoor/server.py"
       - "--catalog"
-      - "/path/to/inspectoor/docs/catalog.json"
+      - "/path/to/ethspectoor/docs/catalog.json"
       - "--indexes-dir"
-      - "/path/to/inspectoor/indexes"
+      - "/path/to/ethspectoor/indexes"
       - "--repos-dir"
-      - "/path/to/inspectoor/repos/specs"
+      - "/path/to/ethspectoor/repos/specs"
 ```
 
 The `--indexes-dir` and `--repos-dir` flags are optional but enable the

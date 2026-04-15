@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-The Inspectoor -- Ethereum Specs Index builder.
+The Ethspectoor -- Ethereum Specs Index builder.
 
 Orchestrates extraction, enrichment, and optional example fetching
 for one or more spec repos. Auto-clones repos when not provided.
@@ -259,7 +259,7 @@ def build_all(repos_dir: str = "./repos/specs", output_dir: str = "./indexes",
     catalog_script = str(base_dir / "build_catalog.py")
 
     print("\n" + "=" * 60, file=sys.stderr)
-    print("The Inspectoor -- Full Build", file=sys.stderr)
+    print("The Ethspectoor -- Full Build", file=sys.stderr)
     print(f"  Repos: {repos_dir}", file=sys.stderr)
     print(f"  Indexes: {output_dir}", file=sys.stderr)
     print("=" * 60 + "\n", file=sys.stderr)
@@ -331,7 +331,7 @@ def build_all(repos_dir: str = "./repos/specs", output_dir: str = "./indexes",
 
 
 def main():
-    parser = argparse.ArgumentParser(description="The Inspectoor -- build Ethereum spec indexes")
+    parser = argparse.ArgumentParser(description="The Ethspectoor -- build Ethereum spec indexes")
     parser.add_argument("--all", action="store_true",
                         help="Build all specs (clones repos if needed, links, builds catalog)")
     parser.add_argument("--profile",

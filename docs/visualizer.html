@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Inspectoor - Transaction Lifecycle Visualizer</title>
+<title>The Ethspectoor - Transaction Lifecycle Visualizer</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="stylesheet" href="css/visualizer.css">
@@ -11,20 +11,22 @@
 <body>
 
 <div class="header">
-  <div class="logo" onclick="window.location='index.html'"><img src="logo.svg" alt="" style="height:20px;vertical-align:middle;margin-right:4px"> The <span class="accent">Inspectoor</span></div>
+  <div class="logo" onclick="window.location='index.html'"><img src="logo.svg" alt="" style="height:20px;vertical-align:middle;margin-right:4px"> The <span class="accent">Ethspectoor</span></div>
   <div class="nav-tabs">
     <button class="nav-tab" onclick="window.location='index.html'">Home</button>
     <button class="nav-tab" onclick="window.location='index.html#/types'">Types</button>
     <button class="nav-tab" onclick="window.location='index.html#/endpoints'">Endpoints</button>
     <button class="nav-tab" onclick="window.location='index.html#/diff'">Diff</button>
+    <button class="nav-tab" onclick="window.location='index.html#/prs'">PRs</button>
     <button class="nav-tab active">Visualizer</button>
   </div>
   <div style="flex:1"></div>
   <div class="fork-selector">
-    <select id="forkSelect" onchange="onForkChange(this.value)">
+    <select id="forkSelect">
       <option value="deneb">Deneb</option>
       <option value="electra">Electra</option>
       <option value="fulu">Fulu</option>
+      <option value="gloas">Gloas</option>
     </select>
   </div>
 </div>
@@ -43,7 +45,7 @@
 
 <div class="main-area">
   <div class="svg-container">
-    <svg id="mainSvg" width="2100" height="680" xmlns="http://www.w3.org/2000/svg"></svg>
+    <svg id="mainSvg" width="2800" height="680" xmlns="http://www.w3.org/2000/svg"></svg>
   </div>
 </div>
 
@@ -80,9 +82,9 @@ ACTORS.forEach((a, i) => { ACTOR_Y[a] = TOP_OFFSET + i * LANE_H + LANE_H / 2; })
 // === PHASE X RANGES ===
 const PHASES = [
   { id: 'submission', label: 'SUBMISSION', x0: 100, x1: 340 },
-  { id: 'building', label: 'BLOCK BUILDING', x0: 340, x1: 1150 },
-  { id: 'proposal', label: 'PROPOSAL + VALIDATION', x0: 1150, x1: 1550 },
-  { id: 'finality', label: 'ATTESTATION + FINALITY', x0: 1550, x1: 2050 }
+  { id: 'building', label: 'BLOCK BUILDING', x0: 340, x1: 1250 },
+  { id: 'proposal', label: 'PROPOSAL + VALIDATION', x0: 1250, x1: 1750 },
+  { id: 'finality', label: 'ATTESTATION + FINALITY', x0: 1750, x1: 2700 }
 ];
 
 // === NODE DATA ===
@@ -146,24 +148,24 @@ const NODES_BASE = [
     github:'https://github.com/ethereum/builder-specs', path:'pbs' },
 
   // Phase 3: Proposal + Validation
-  { id:'publishBlock', label:'publishBlockV2', spec:'beacon-apis', actor:'CL / BN', x:1220, y:ACTOR_Y['CL / BN'],
+  { id:'publishBlock', label:'publishBlockV2', spec:'beacon-apis', actor:'CL / BN', x:1350, y:ACTOR_Y['CL / BN'],
     desc:'CL publishes the signed beacon block (with execution payload) to the consensus P2P network.', params:'SignedBeaconBlock', returns:'—',
     github:'https://github.com/ethereum/beacon-APIs' },
-  { id:'processBlock', label:'process_block', spec:'consensus-specs', actor:'CL / BN', x:1390, y:ACTOR_Y['CL / BN'],
+  { id:'processBlock', label:'process_block', spec:'consensus-specs', actor:'CL / BN', x:1520, y:ACTOR_Y['CL / BN'],
     desc:'Consensus state transition: validates block header, execution payload, attestations, etc.', params:'State, SignedBeaconBlock', returns:'Updated State',
     github:'https://github.com/ethereum/consensus-specs' },
-  { id:'newPayload', label:'engine_newPayloadV3', spec:'execution-apis', actor:'EL', x:1390, y:ACTOR_Y['EL'],
+  { id:'newPayload', label:'engine_newPayloadV3', spec:'execution-apis', actor:'EL', x:1520, y:ACTOR_Y['EL'],
     desc:'CL sends the execution payload to EL for independent validation against the EL state.', params:'ExecutionPayload, versioned_hashes, parent_beacon_block_root', returns:'PayloadStatus',
     github:'https://github.com/ethereum/execution-apis' },
 
   // Phase 4: Attestation + Finality
-  { id:'submitAttest', label:'submitPoolAttestations', spec:'beacon-apis', actor:'CL / BN', x:1620, y:ACTOR_Y['CL / BN'],
+  { id:'submitAttest', label:'submitPoolAttestations', spec:'beacon-apis', actor:'CL / BN', x:1980, y:ACTOR_Y['CL / BN'],
     desc:'Validators submit attestations for the block head, source, and target checkpoints.', params:'Attestation[]', returns:'—',
     github:'https://github.com/ethereum/beacon-APIs' },
-  { id:'processAttest', label:'process_attestation', spec:'consensus-specs', actor:'CL / BN', x:1810, y:ACTOR_Y['CL / BN'],
+  { id:'processAttest', label:'process_attestation', spec:'consensus-specs', actor:'CL / BN', x:2250, y:ACTOR_Y['CL / BN'],
     desc:'Consensus processes each attestation: validates signature, updates fork choice weights.', params:'State, Attestation', returns:'Updated State',
     github:'https://github.com/ethereum/consensus-specs' },
-  { id:'finality', label:'Finality', spec:'consensus-specs', actor:'CL / BN', x:1960, y:ACTOR_Y['CL / BN'],
+  { id:'finality', label:'Finality', spec:'consensus-specs', actor:'CL / BN', x:2500, y:ACTOR_Y['CL / BN'],
     desc:'After 2 epochs of justified checkpoints, the block and all ancestors are finalized (irreversible).', params:'Justified checkpoints', returns:'Finalized checkpoint',
     github:'https://github.com/ethereum/consensus-specs', conceptual:true }
 ];
@@ -220,8 +222,84 @@ const FORK_DATA = {
     getHeader: { returns:'Electra.SignedBuilderBid (no Fulu variant yet)' },
     submitBlinded: { params:'SignedBlindedBeaconBlock', returns:'Fulu.ExecutionPayloadAndBlobsBundle' },
     publishBlock: { params:'Fulu.SignedBlockContents' }
+  },
+  gloas: {
+    fcu: { label:'engine_forkchoiceUpdatedV4', params:'ForkchoiceState, PayloadAttributesV4', returns:'PayloadId' },
+    getPayload: { label:'engine_getPayloadV6', returns:'ExecutionPayloadV4' },
+    newPayload: { label:'engine_newPayloadV5', params:'ExecutionPayloadV4, Array[hash32], hash32, Array[bytes]' },
+    publishBlock: { params:'Gloas.SignedBeaconBlock (no payload)' },
+    processBlock: { desc:'Consensus state transition: validates bid, payload attestations, and standard operations. ExecutionPayload is no longer in BeaconBlockBody.' }
   }
 };
+
+// === GLOAS (ePBS / EIP-7732) PATH ===
+// In ePBS, the relay and sidecar are removed from the critical path.
+// Builder gossips bids via P2P. Proposer includes bid in BeaconBlockBody.
+// Builder reveals payload via P2P. PTC votes on timeliness.
+
+const GLOAS_HIDE = new Set([
+  'regVal', 'regValSidecar', 'regValRelay',
+  'builderSubmit', 'getHeader', 'getHeaderSidecar', 'getHeaderRelay',
+  'produceBlock', 'submitBlinded', 'submitBlindedRelay'
+]);
+
+const GLOAS_NODES = [
+  // Builder creates bid alongside the block
+  { id:'builderBid', label:'create bid', spec:'consensus-specs', actor:'Builder', x:780, y:ACTOR_Y['Builder'],
+    desc:'Builder creates a SignedExecutionPayloadBid containing block_hash, blob commitments, value, and fee recipient. Gossipped to the P2P network.',
+    params:'ExecutionPayload, builder credentials', returns:'SignedExecutionPayloadBid',
+    github:'https://github.com/ethereum/consensus-specs', path:'pbs' },
+  // Proposer receives bid from P2P
+  { id:'receiveBid', label:'receive bid (P2P)', spec:'consensus-specs', actor:'CL / BN', x:850, y:ACTOR_Y['CL / BN'],
+    desc:'Proposer receives SignedExecutionPayloadBid from the P2P gossip network and selects the best bid to include in their block.',
+    params:'SignedExecutionPayloadBid[]', returns:'best SignedExecutionPayloadBid',
+    github:'https://github.com/ethereum/consensus-specs', path:'pbs' },
+  // Proposer includes bid in block body
+  { id:'includeBid', label:'process_execution_payload_bid', spec:'consensus-specs', actor:'CL / BN', x:1100, y:ACTOR_Y['CL / BN'],
+    desc:'Proposer includes the SignedExecutionPayloadBid in BeaconBlockBody. Execution payload is no longer part of the block. The bid commits to block_hash and blob_kzg_commitments.',
+    params:'BeaconBlockBody.signed_execution_payload_bid', returns:'BeaconBlock',
+    github:'https://github.com/ethereum/consensus-specs', path:'pbs' },
+  // Builder reveals payload after seeing the block
+  { id:'revealPayload', label:'reveal payload (P2P)', spec:'consensus-specs', actor:'Builder', x:1400, y:ACTOR_Y['Builder'],
+    desc:'After seeing the beacon block containing their bid, the builder reveals the full ExecutionPayloadEnvelope via P2P gossip. Contains the actual ExecutionPayload, execution_requests, and state_root.',
+    params:'SignedBeaconBlock (with my bid)', returns:'SignedExecutionPayloadEnvelope',
+    github:'https://github.com/ethereum/consensus-specs', path:'pbs' },
+  // Fork choice processes the envelope
+  { id:'onPayload', label:'on_execution_payload', spec:'consensus-specs', actor:'CL / BN', x:1500, y:ACTOR_Y['CL / BN'],
+    desc:'Fork choice handler: when a SignedExecutionPayloadEnvelope arrives via P2P, the CL verifies it against the beacon block, checks data availability, and runs process_execution_payload.',
+    params:'SignedExecutionPayloadEnvelope', returns:'Updated Store',
+    github:'https://github.com/ethereum/consensus-specs', path:'pbs' },
+  // PTC votes
+  { id:'ptcVote', label:'PTC vote', spec:'consensus-specs', actor:'CL / BN', x:1800, y:ACTOR_Y['CL / BN'],
+    desc:'Payload Timeliness Committee (PTC) members vote on whether they saw the payload on time. Votes are gossiped on the payload_attestation_message topic and included in the next block as PayloadAttestations.',
+    params:'beacon_block_root, slot, payload_present', returns:'PayloadAttestationMessage',
+    github:'https://github.com/ethereum/consensus-specs', path:'pbs' }
+];
+
+const GLOAS_EDGES = [
+  // Shared: tx submission
+  { from:'sendRawTx', to:'mempool', label:'Transaction', type:'Transaction' },
+  // Local path (unchanged)
+  { from:'mempool', to:'fcu', label:'', type:'' },
+  { from:'fcu', to:'stateTransition', label:'PayloadId', type:'PayloadId' },
+  { from:'stateTransition', to:'getPayload', label:'ExecutionPayload', type:'ExecutionPayload' },
+  { from:'getPayload', to:'publishBlock', label:'ExecutionPayload', type:'ExecutionPayload', path:'local' },
+  // ePBS path
+  { from:'mempool', to:'builderBuild', label:'Transactions', type:'Transaction' },
+  { from:'builderBuild', to:'builderBid', label:'ExecutionPayloadBid', type:'ExecutionPayloadBid' },
+  { from:'builderBid', to:'receiveBid', label:'P2P gossip', type:'SignedExecutionPayloadBid' },
+  { from:'receiveBid', to:'includeBid', label:'SignedExecutionPayloadBid', type:'SignedExecutionPayloadBid' },
+  { from:'includeBid', to:'publishBlock', label:'BeaconBlock (bid only)', type:'BeaconBlockBody', path:'pbs' },
+  { from:'publishBlock', to:'revealPayload', label:'SignedBeaconBlock', type:'SignedBeaconBlock' },
+  { from:'revealPayload', to:'onPayload', label:'SignedExecutionPayloadEnvelope', type:'SignedExecutionPayloadEnvelope' },
+  { from:'onPayload', to:'newPayload', label:'ExecutionPayload', type:'ExecutionPayload' },
+  // Converged
+  { from:'publishBlock', to:'processBlock', label:'SignedBeaconBlock', type:'SignedBeaconBlock' },
+  { from:'newPayload', to:'ptcVote', label:'PayloadStatus (VALID)', type:'PayloadStatus' },
+  { from:'ptcVote', to:'submitAttest', label:'', type:'' },
+  { from:'submitAttest', to:'processAttest', label:'Attestation[]', type:'Attestation' },
+  { from:'processAttest', to:'finality', label:'Justified checkpoints', type:'' }
+];
 
 let currentFork = 'deneb';
 let catalog = null;
@@ -231,11 +309,21 @@ fetch('catalog.json').then(r => r.json()).then(d => { catalog = d; }).catch(() =
 
 function getNodes(fork) {
   const forkOverrides = FORK_DATA[fork] || {};
-  return NODES_BASE.map(n => {
+  const isGloas = (fork === 'gloas');
+  const hideSet = isGloas ? GLOAS_HIDE : new Set();
+  const base = NODES_BASE.filter(n => !hideSet.has(n.id)).map(n => {
     const ov = forkOverrides[n.id];
     if (!ov) return {...n};
     return {...n, ...ov, _origLabel: n.label};
   });
+  if (isGloas) {
+    return base.concat(GLOAS_NODES.map(n => ({...n})));
+  }
+  return base;
+}
+
+function getEdges(fork) {
+  return (fork === 'gloas') ? GLOAS_EDGES : EDGES_BASE;
 }
 
 function onForkChange(fork) {
@@ -257,7 +345,7 @@ function render() {
 
   // Grid
   const gridG = el('g');
-  for (let x = 100; x < 2100; x += 40) gridG.appendChild(el('line', { x1:x, y1:TOP_OFFSET-20, x2:x, y2:TOP_OFFSET+LANE_H*6, class:'grid-line' }));
+  for (let x = 100; x < 2800; x += 40) gridG.appendChild(el('line', { x1:x, y1:TOP_OFFSET-20, x2:x, y2:TOP_OFFSET+LANE_H*6, class:'grid-line' }));
   for (let y = TOP_OFFSET; y <= TOP_OFFSET+LANE_H*5; y += 40) gridG.appendChild(el('line', { x1:80, y1:y, x2:1620, y2:y, class:'grid-line' }));
   svg.appendChild(gridG);
 
@@ -265,7 +353,7 @@ function render() {
   const lanesG = el('g');
   ACTORS.forEach((actor, i) => {
     const ly = TOP_OFFSET + i * LANE_H;
-    lanesG.appendChild(el('rect', { x:80, y:ly, width:2010, height:LANE_H, class:'swim-lane-bg', rx:'0' }));
+    lanesG.appendChild(el('rect', { x:80, y:ly, width:2710, height:LANE_H, class:'swim-lane-bg', rx:'0' }));
     const txt = el('text', { x:20, y:ly + LANE_H/2 + 4, class:'swim-label' });
     txt.textContent = actor;
     lanesG.appendChild(txt);
@@ -287,14 +375,17 @@ function render() {
   const localLbl = el('text', { x:680, y:ACTOR_Y['EL'] - 38, 'text-anchor':'middle', 'font-size':'10', fill:'#3fb950', opacity:'0.7', 'font-weight':'600' });
   localLbl.textContent = '▾ LOCAL PATH';
   pathLblG.appendChild(localLbl);
-  const pbsLbl = el('text', { x:700, y:ACTOR_Y['Sidecar'] - 38, 'text-anchor':'middle', 'font-size':'10', fill:'#d29922', opacity:'0.7', 'font-weight':'600' });
-  pbsLbl.textContent = '▾ PBS PATH';
+  const pbsLblY = currentFork === 'gloas' ? ACTOR_Y['Builder'] - 38 : ACTOR_Y['Sidecar'] - 38;
+  const pbsLblText = currentFork === 'gloas' ? '▾ ePBS PATH (EIP-7732)' : '▾ PBS PATH';
+  const pbsLbl = el('text', { x:700, y:pbsLblY, 'text-anchor':'middle', 'font-size':'10', fill:'#d29922', opacity:'0.7', 'font-weight':'600' });
+  pbsLbl.textContent = pbsLblText;
   pathLblG.appendChild(pbsLbl);
   svg.appendChild(pathLblG);
 
   // Edges
   const edgesG = el('g');
-  EDGES_BASE.forEach((edge, ei) => {
+  const currentEdges = getEdges(currentFork);
+  currentEdges.forEach((edge, ei) => {
     const fromN = nodeMap[edge.from];
     const toN = nodeMap[edge.to];
     if (!fromN || !toN) return;
@@ -402,7 +493,7 @@ function showTooltip(ev, node) {
   const svg = document.getElementById('mainSvg');
   const connectedEdges = new Set();
   const connectedNodes = new Set([node.id]);
-  EDGES_BASE.forEach((edge, i) => {
+  getEdges(currentFork).forEach((edge, i) => {
     if (edge.from === node.id || edge.to === node.id) {
       connectedEdges.add(i);
       connectedNodes.add(edge.from);
@@ -487,6 +578,9 @@ function closeDetail() {
 
 // Close panel on Escape
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
+
+// Wire up fork selector (module scope can't use inline onchange)
+document.getElementById('forkSelect').addEventListener('change', (e) => onForkChange(e.target.value));
 
 // Initial render
 render();

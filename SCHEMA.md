@@ -1,4 +1,4 @@
-# The Inspectoor -- Unified Schema
+# The Ethspectoor -- Unified Schema
 
 ## Purpose
 

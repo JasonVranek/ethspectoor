@@ -1,6 +1,6 @@
-# Inspectoor MCP Skill
+# Ethspectoor MCP Skill
 
-A structured guide for AI agents using the Inspectoor MCP server to navigate
+A structured guide for AI agents using the Ethspectoor MCP server to navigate
 Ethereum specification data. Covers all tools, common workflows, and gotchas.
 
 ## Mental Model
@@ -180,22 +180,22 @@ new commits or when results seem stale. Omit `specs` to rebuild everything.
 
 ## MCP Configuration
 
-To connect the Inspectoor to your MCP client:
+To connect the Ethspectoor to your MCP client:
 
 ```json
 {
   "mcpServers": {
-    "inspectoor": {
+    "ethspectoor": {
       "command": "uv",
       "args": [
         "run", "--with", "mcp", "--with", "pyyaml",
-        "python3", "/path/to/inspectoor/server.py",
-        "--catalog", "/path/to/inspectoor/docs/catalog.json"
+        "python3", "/path/to/ethspectoor/server.py",
+        "--catalog", "/path/to/ethspectoor/docs/catalog.json"
       ]
     }
   }
 }
 ```
 
-Replace `/path/to/inspectoor` with the actual path to your cloned repo.
+Replace `/path/to/ethspectoor` with the actual path to your cloned repo.
 The server reads the pre-built catalog and serves it over stdio transport.
