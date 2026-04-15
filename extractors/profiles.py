@@ -4,10 +4,10 @@ that the generic markdown parser needs: fork detection, file lists, domain
 classification, and GitHub URL templates.
 """
 
-from dataclasses import dataclass, field
-from typing import Optional
 import re
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Optional
 
 
 @dataclass
@@ -15,20 +15,20 @@ class SpecProfile:
     """Configuration for a specific spec repo."""
 
     # Identity
-    name: str                          # e.g. "builder-specs"
-    repo: str                          # e.g. "ethereum/builder-specs"
-    source_format: str                 # e.g. "markdown+openapi"
+    name: str  # e.g. "builder-specs"
+    repo: str  # e.g. "ethereum/builder-specs"
+    source_format: str  # e.g. "markdown+openapi"
 
     # GitHub URL templates
-    github_raw: str                    # raw content URL with {branch} and path
-    github_web: str                    # web URL with {branch} and path
+    github_raw: str  # raw content URL with {branch} and path
+    github_web: str  # web URL with {branch} and path
 
     # Fork detection
-    specs_subdir: str = "specs"        # directory containing fork subdirs
+    specs_subdir: str = "specs"  # directory containing fork subdirs
     fork_config_path: Optional[str] = None  # e.g. "configs/mainnet.yaml" for CL
     default_fork_order: list = field(default_factory=list)
-    default_branch: str = "main"       # git branch to clone/pull
-    first_fork: str = ""               # the "genesis" fork (everything here is new)
+    default_branch: str = "main"  # git branch to clone/pull
+    first_fork: str = ""  # the "genesis" fork (everything here is new)
 
     # File scanning
     spec_files: list = field(default_factory=list)  # files to scan in each fork dir
@@ -36,15 +36,21 @@ class SpecProfile:
 
     # Domain classification
     file_domain_rules: dict = field(default_factory=dict)  # file -> domain
-    section_domain_rules: dict = field(default_factory=dict)  # section heading -> domain
+    section_domain_rules: dict = field(
+        default_factory=dict
+    )  # section heading -> domain
     default_domain: str = "other"
 
     # Type alias table detection
-    type_alias_sections: list = field(default_factory=list)  # section headings that contain type tables
+    type_alias_sections: list = field(
+        default_factory=list
+    )  # section headings that contain type tables
     type_alias_file_filter: Optional[str] = None  # only look in files matching this
 
     # Constant table detection
-    constant_parent_sections: list = field(default_factory=lambda: ["constants", "preset", "configuration"])
+    constant_parent_sections: list = field(
+        default_factory=lambda: ["constants", "preset", "configuration"]
+    )
 
     # OpenAPI spec file (for combined markdown+openapi repos)
     openapi_file: Optional[str] = None
@@ -55,7 +61,9 @@ class SpecProfile:
     schema_file: Optional[str] = None
 
 
-def detect_forks_from_config(repo_dir: str, config_path: str, specs_subdir: str = "specs") -> list:
+def detect_forks_from_config(
+    repo_dir: str, config_path: str, specs_subdir: str = "specs"
+) -> list:
     """Detect fork ordering from a mainnet.yaml config file (consensus-specs style).
 
     Reconciles config fork names with actual directory names. Handles the
@@ -107,10 +115,13 @@ def detect_forks_from_dirs(repo_dir: str, specs_subdir: str = "specs") -> list:
     specs_dir = Path(repo_dir) / specs_subdir
     if not specs_dir.is_dir():
         return []
-    return sorted([
-        d.name for d in specs_dir.iterdir()
-        if d.is_dir() and not d.name.startswith(("_", "."))
-    ])
+    return sorted(
+        [
+            d.name
+            for d in specs_dir.iterdir()
+            if d.is_dir() and not d.name.startswith(("_", "."))
+        ]
+    )
 
 
 def detect_features(repo_dir: str, specs_subdir: str = "specs") -> list:
@@ -127,14 +138,21 @@ CONSENSUS_SPECS = SpecProfile(
     name="consensus-specs",
     repo="ethereum/consensus-specs",
     source_format="markdown",
-    default_branch="main",
+    default_branch="master",
     github_raw="https://raw.githubusercontent.com/ethereum/consensus-specs/{branch}/specs",
     github_web="https://github.com/ethereum/consensus-specs/blob/{branch}/specs",
     specs_subdir="specs",
     fork_config_path="configs/mainnet.yaml",
     default_fork_order=[
-        "phase0", "altair", "bellatrix", "capella",
-        "deneb", "electra", "fulu", "gloas", "heze",
+        "phase0",
+        "altair",
+        "bellatrix",
+        "capella",
+        "deneb",
+        "electra",
+        "fulu",
+        "gloas",
+        "heze",
     ],
     first_fork="phase0",  # directory name, not config name
     spec_files=[
@@ -294,7 +312,16 @@ BEACON_APIS = SpecProfile(
     github_web="https://github.com/ethereum/beacon-APIs/blob/{branch}",
     specs_subdir="types",
     fork_config_path=None,
-    default_fork_order=["phase0", "altair", "bellatrix", "capella", "deneb", "electra", "fulu", "gloas"],
+    default_fork_order=[
+        "phase0",
+        "altair",
+        "bellatrix",
+        "capella",
+        "deneb",
+        "electra",
+        "fulu",
+        "gloas",
+    ],
     first_fork="phase0",
     spec_files=[],
     features_subdir=None,
@@ -314,8 +341,13 @@ REMOTE_SIGNING_API = SpecProfile(
     specs_subdir="signing",
     fork_config_path=None,
     default_fork_order=[
-        "phase0", "altair", "bellatrix", "capella",
-        "deneb", "electra", "fulu",
+        "phase0",
+        "altair",
+        "bellatrix",
+        "capella",
+        "deneb",
+        "electra",
+        "fulu",
     ],
     first_fork="phase0",
     spec_files=[],
@@ -328,7 +360,6 @@ REMOTE_SIGNING_API = SpecProfile(
 )
 
 
-
 EXECUTION_SPECS = SpecProfile(
     name="execution-specs",
     repo="ethereum/execution-specs",
@@ -338,9 +369,24 @@ EXECUTION_SPECS = SpecProfile(
     specs_subdir="src/ethereum/forks",
     fork_config_path=None,
     default_fork_order=[
-        "frontier", "homestead", "dao_fork", "tangerine_whistle", "spurious_dragon",
-        "byzantium", "constantinople", "istanbul", "muir_glacier", "berlin", "london",
-        "arrow_glacier", "gray_glacier", "paris", "shanghai", "cancun", "prague", "osaka",
+        "frontier",
+        "homestead",
+        "dao_fork",
+        "tangerine_whistle",
+        "spurious_dragon",
+        "byzantium",
+        "constantinople",
+        "istanbul",
+        "muir_glacier",
+        "berlin",
+        "london",
+        "arrow_glacier",
+        "gray_glacier",
+        "paris",
+        "shanghai",
+        "cancun",
+        "prague",
+        "osaka",
     ],
     first_fork="frontier",
     spec_files=[],
