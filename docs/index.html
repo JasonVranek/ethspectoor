@@ -654,6 +654,16 @@ a.type-link.syn-type:hover, a.type-link.syn-func:hover { text-decoration-style: 
 .pr-sidebar-item .pr-title { font-size: 12px; color: var(--text); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pr-sidebar-item .pr-author { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 .pr-sidebar-item .pr-stats { display: flex; gap: 6px; margin-top: 4px; }
+.pr-spec-group-header {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; cursor: pointer; font-size: 12px;
+  color: var(--text-muted); border-bottom: 1px solid var(--border);
+  user-select: none;
+}
+.pr-spec-group-header:hover { background: var(--surface-2); }
+.pr-spec-group-header .pr-group-arrow { font-size: 10px; color: var(--text-dim); transition: transform 0.15s; }
+.pr-spec-group-header.collapsed .pr-group-arrow { transform: rotate(-90deg); }
+.pr-spec-group-header .pr-group-count { margin-left: auto; font-size: 11px; color: var(--text-dim); }
 .pr-item-row {
   padding: 8px 14px;
   cursor: pointer;
@@ -866,6 +876,14 @@ function route() {
     document.querySelector('[data-route="#/prs"]').classList.add('active');
   }
 
+  // Update search placeholder per tab
+  const searchInput = document.getElementById('search-input');
+  if (hash.startsWith('#/prs')) {
+    searchInput.placeholder = 'Search PRs by title or number...  (/ to focus, Esc to clear)';
+  } else {
+    searchInput.placeholder = 'Search types, endpoints...  (/ to focus, Esc to clear)';
+  }
+
   // Apply search query from URL params
   const _params = parseParams(hash);
   if (_params.q) {
@@ -982,6 +1000,8 @@ function onSearchInput(val) {
   const hash = window.location.hash || '#/';
   if (hash.startsWith('#/diff')) {
     filterDiffItems(val);
+  } else if (hash.startsWith('#/prs')) {
+    filterPRSidebar(val);
   } else if (hash.startsWith('#/types') || hash.startsWith('#/endpoints')) {
     route();
   } else if (val.length > 0) {
@@ -1031,6 +1051,8 @@ document.addEventListener('keydown', (e) => {
       searchInput.value = '';
       if ((window.location.hash || '').startsWith('#/diff')) {
         filterDiffItems('');
+      } else if ((window.location.hash || '').startsWith('#/prs')) {
+        filterPRSidebar('');
       } else {
         route();
       }
@@ -2111,26 +2133,59 @@ function renderPRBrowser(container, params) {
     return;
   }
 
+  // Group PRs by spec, sort ascending within each group
+  const specGroups = {};
+  allPRs.forEach(pr => {
+    if (!specGroups[pr.spec]) specGroups[pr.spec] = [];
+    specGroups[pr.spec].push(pr);
+  });
+  const specNames = Object.keys(specGroups).sort();
+  specNames.forEach(spec => {
+    specGroups[spec].sort((a, b) => a.number - b.number);
+  });
+
+  // Auto-expand the group containing the selected PR, collapse others
+  let activeSpec = null;
+  if (selectedPR) {
+    const activePR = allPRs.find(p => String(p.number) === String(selectedPR));
+    if (activePR) activeSpec = activePR.spec;
+  }
+
   let html = '<div class="panel-sidebar" style="width:300px;min-width:300px">';
   html += '<div style="padding:12px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-muted)">';
   html += allPRs.length + ' indexed PR' + (allPRs.length !== 1 ? 's' : '');
   html += '</div>';
 
-  allPRs.forEach(pr => {
-    const isActive = String(pr.number) === String(selectedPR);
-    html += '<div class="pr-sidebar-item' + (isActive ? ' active' : '') + '" onclick="navigate(\'#/prs?pr=' + pr.number + '\')">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center">';
-    html += '<span class="pr-num">#' + pr.number + '</span>';
-    html += specBadge(pr.spec);
+  specNames.forEach(spec => {
+    const groupPRs = specGroups[spec];
+    const isExpanded = activeSpec === spec || (!activeSpec && specNames.length === 1);
+    const collapsedCls = isExpanded ? '' : ' collapsed';
+
+    html += '<div class="pr-spec-group" data-spec="' + esc(spec) + '">';
+    html += '<div class="pr-spec-group-header' + collapsedCls + '" onclick="togglePRSpecGroup(this)">';
+    html += '<span class="pr-group-arrow">▼</span>';
+    html += specBadge(spec);
+    html += '<span class="pr-group-count">' + groupPRs.length + '</span>';
     html += '</div>';
-    html += '<div class="pr-title">' + esc(pr.title) + '</div>';
-    html += '<div class="pr-author">by ' + esc(pr.author) + '</div>';
-    html += '<div class="pr-stats">';
-    if (pr.counts.added) html += '<span class="pr-action-badge added">+' + pr.counts.added + '</span>';
-    if (pr.counts.modified) html += '<span class="pr-action-badge modified">~' + pr.counts.modified + '</span>';
-    if (pr.counts.removed) html += '<span class="pr-action-badge removed">-' + pr.counts.removed + '</span>';
-    html += '</div>';
-    html += '</div>';
+    html += '<div class="pr-spec-group-items" style="display:' + (isExpanded ? 'block' : 'none') + '">';
+
+    groupPRs.forEach(pr => {
+      const isActive = String(pr.number) === String(selectedPR);
+      html += '<div class="pr-sidebar-item' + (isActive ? ' active' : '') + '" data-pr-number="' + pr.number + '" data-pr-title="' + esc(pr.title) + '" onclick="navigate(\'#/prs?pr=' + pr.number + '\')">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+      html += '<span class="pr-num">#' + pr.number + '</span>';
+      html += '</div>';
+      html += '<div class="pr-title">' + esc(pr.title) + '</div>';
+      html += '<div class="pr-author">by ' + esc(pr.author) + '</div>';
+      html += '<div class="pr-stats">';
+      if (pr.counts.added) html += '<span class="pr-action-badge added">+' + pr.counts.added + '</span>';
+      if (pr.counts.modified) html += '<span class="pr-action-badge modified">~' + pr.counts.modified + '</span>';
+      if (pr.counts.removed) html += '<span class="pr-action-badge removed">-' + pr.counts.removed + '</span>';
+      html += '</div>';
+      html += '</div>';
+    });
+
+    html += '</div></div>';
   });
   html += '</div>';
 
@@ -2151,6 +2206,9 @@ function renderPRBrowser(container, params) {
   html += '</div>';
   container.innerHTML = html;
 
+  // Apply any active search filter
+  if (searchQuery) filterPRSidebar(searchQuery);
+
   // Auto-expand item if specified
   if (expandItem && selectedPR) {
     setTimeout(function() {
@@ -2160,6 +2218,56 @@ function renderPRBrowser(container, params) {
         itemEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }, 50);
+  }
+}
+
+function togglePRSpecGroup(header) {
+  const items = header.nextElementSibling;
+  const isCollapsed = header.classList.contains('collapsed');
+  if (isCollapsed) {
+    header.classList.remove('collapsed');
+    items.style.display = 'block';
+  } else {
+    header.classList.add('collapsed');
+    items.style.display = 'none';
+  }
+}
+
+function filterPRSidebar(query) {
+  const q = query.toLowerCase().trim();
+  document.querySelectorAll('.pr-spec-group').forEach(group => {
+    const items = group.querySelectorAll('.pr-sidebar-item');
+    const header = group.querySelector('.pr-spec-group-header');
+    const itemsContainer = group.querySelector('.pr-spec-group-items');
+    let anyVisible = false;
+
+    items.forEach(item => {
+      const num = item.getAttribute('data-pr-number') || '';
+      const title = (item.getAttribute('data-pr-title') || '').toLowerCase();
+      const match = !q || num.includes(q) || title.includes(q) || ('#' + num).includes(q);
+      item.style.display = match ? '' : 'none';
+      if (match) anyVisible = true;
+    });
+
+    group.style.display = anyVisible ? '' : 'none';
+    // Auto-expand groups with matches when searching
+    if (q && anyVisible && header && itemsContainer) {
+      header.classList.remove('collapsed');
+      itemsContainer.style.display = 'block';
+    }
+  });
+
+  // Update count display
+  const countEl = document.querySelector('.panel-sidebar > div:first-child');
+  if (countEl) {
+    const total = document.querySelectorAll('.pr-sidebar-item').length;
+    if (q) {
+      const visible = document.querySelectorAll('.pr-sidebar-item').length -
+        document.querySelectorAll('.pr-sidebar-item[style*="display: none"], .pr-sidebar-item[style*="display:none"]').length;
+      countEl.textContent = visible + ' of ' + total + ' PR' + (total !== 1 ? 's' : '');
+    } else {
+      countEl.textContent = total + ' indexed PR' + (total !== 1 ? 's' : '');
+    }
   }
 }
 
