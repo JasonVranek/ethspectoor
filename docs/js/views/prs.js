@@ -52,7 +52,7 @@ export function renderPRBrowser(container, params) {
   });
   const specNames = Object.keys(specGroups).sort();
   specNames.forEach(spec => {
-    specGroups[spec].sort((a, b) => a.number - b.number);
+    specGroups[spec].sort((a, b) => b.number - a.number);
   });
 
   // Auto-expand the group containing the selected PR, collapse others
@@ -62,7 +62,7 @@ export function renderPRBrowser(container, params) {
     if (activePR) activeSpec = activePR.spec;
   }
 
-  let html = '<div class="panel-sidebar" style="width:300px;min-width:300px">';
+  let html = '<div class="panel-sidebar pr-sidebar" style="width:300px;min-width:300px">';
   html += '<div style="padding:12px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-muted)">';
   html += allPRs.length + ' indexed PR' + (allPRs.length !== 1 ? 's' : '');
   html += '</div>';
@@ -106,6 +106,7 @@ export function renderPRBrowser(container, params) {
   if (!selectedPR) {
     html += '<div class="empty-state"><div class="icon">👈</div><div>Select a PR to view changes</div></div>';
   } else {
+    html += '<button class="back-btn" onclick="navigate(\'#/prs\')">&larr; All PRs</button>';
     const pr = allPRs.find(p => String(p.number) === String(selectedPR));
     if (!pr) {
       html += '<div class="empty-state"><div class="icon">❓</div><div>PR #' + esc(selectedPR) + ' not found</div></div>';

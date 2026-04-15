@@ -16,7 +16,7 @@ export { parseParams };
 export function route() {
   const hash = window.location.hash || '#/';
   const main = document.getElementById('main-content');
-  const hasDetail = hash.startsWith('#/type/') || hash.startsWith('#/endpoint/');
+  const hasDetail = hash.startsWith('#/type/') || hash.startsWith('#/endpoint/') || (hash.startsWith('#/prs') && hash.includes('pr='));
   main.className = 'main' + (hasDetail ? ' show-detail' : '');
 
   // Update nav tabs

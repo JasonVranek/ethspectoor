@@ -660,6 +660,22 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
 
 
+/* Mobile back button */
+.back-btn {
+  display: none;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin: 8px 12px;
+  font-family: var(--font-sans);
+  transition: color 0.15s, border-color 0.15s;
+}
+.back-btn:hover { color: var(--text); border-color: var(--text-muted); }
+
 /* Hamburger menu */
 .hamburger {
   display: none;
@@ -678,14 +694,17 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
 /* Responsive */
 @media (max-width: 900px) {
   .panel-sidebar { display: none; }
+  .panel-sidebar.pr-sidebar { display: block; flex: 1; min-width: 0; width: auto; }
   .panel-list { flex: 1; }
   .panel-detail { display: none; }
   .main.show-detail .panel-list { display: none; }
+  .main.show-detail .panel-sidebar { display: none; }
   .main.show-detail .panel-detail { display: block; flex: 1; }
 }
 @media (max-width: 600px) {
   .header { gap: 6px; padding: 0 8px; flex-wrap: wrap; }
   .hamburger { display: block; }
+  .back-btn { display: block; }
   .nav-tabs {
     display: none;
     position: absolute;
