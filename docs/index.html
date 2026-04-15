@@ -431,6 +431,95 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
   letter-spacing: 0.4px;
 }
 
+/* Home page sections */
+.home-section { margin-top: 36px; }
+.home-section h2 {
+  font-family: var(--font-mono); font-size: 18px; color: var(--accent);
+  margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+}
+.home-section p { color: var(--text-muted); font-size: 14px; margin-bottom: 12px; }
+.home-section pre {
+  font-family: var(--font-mono); font-size: 13px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 8px; padding: 16px;
+  overflow-x: auto; margin-bottom: 12px; line-height: 1.7; color: var(--text);
+}
+.home-section code {
+  font-family: var(--font-mono); font-size: 13px; background: var(--surface-2);
+  padding: 2px 6px; border-radius: 4px; color: var(--accent);
+}
+.home-section h3 { font-size: 15px; font-weight: 600; margin: 16px 0 6px; }
+.tool-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 8px; margin-bottom: 12px;
+}
+.tool-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: 10px 14px;
+}
+.tool-name { font-family: var(--font-mono); font-size: 13px; color: var(--green); font-weight: 600; }
+.tool-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.home-github-link {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 20px; font-family: var(--font-mono); font-size: 14px;
+  margin-top: 8px; transition: border-color 0.15s; color: var(--accent);
+}
+.home-github-link:hover { border-color: var(--accent); text-decoration: none; }
+.skill-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px 20px; margin: 12px 0 24px; transition: border-color 0.15s;
+}
+.skill-card:hover { border-color: var(--accent); }
+.skill-card-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.skill-card-title { font-family: var(--font-mono); font-size: 15px; font-weight: 600; color: var(--accent); }
+.skill-card-desc { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+.skill-card-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.skill-btn {
+  font-family: var(--font-mono); font-size: 13px; padding: 6px 14px;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.skill-btn:hover { border-color: var(--accent); color: var(--accent); }
+.skill-btn-copy.copied { border-color: var(--green); color: var(--green); }
+.skill-modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  z-index: 1000; justify-content: center; align-items: center; padding: 24px;
+}
+.skill-modal-overlay.open { display: flex; }
+.skill-modal {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  width: 100%; max-width: 860px; max-height: 85vh;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.skill-modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.skill-modal-title { font-family: var(--font-mono); font-size: 15px; font-weight: 600; color: var(--accent); }
+.skill-modal-close {
+  background: none; border: none; color: var(--text-muted); font-size: 24px;
+  cursor: pointer; padding: 0 4px; line-height: 1;
+}
+.skill-modal-close:hover { color: var(--text); }
+.skill-modal-body {
+  padding: 20px 24px; overflow-y: auto; font-size: 14px; line-height: 1.7;
+}
+.skill-modal-body h1 { font-size: 22px; margin: 24px 0 8px; font-family: var(--font-mono); color: var(--accent); }
+.skill-modal-body h2 { font-size: 17px; margin: 20px 0 8px; font-family: var(--font-mono); color: var(--accent); border: none; }
+.skill-modal-body h3 { font-size: 14px; margin: 16px 0 6px; font-family: var(--font-mono); color: var(--text); }
+.skill-modal-body p { margin: 8px 0; }
+.skill-modal-body ul, .skill-modal-body ol { margin: 8px 0; padding-left: 24px; }
+.skill-modal-body li { margin: 4px 0; }
+.skill-modal-body code { font-family: var(--font-mono); font-size: 13px; background: var(--bg); padding: 2px 6px; border-radius: 4px; color: var(--accent); }
+.skill-modal-body pre { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px 16px; overflow-x: auto; margin: 8px 0; font-family: var(--font-mono); font-size: 12px; line-height: 1.5; }
+.skill-modal-body pre code { background: none; padding: 0; color: var(--text); }
+.skill-modal-body table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 13px; }
+.skill-modal-body th, .skill-modal-body td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
+.skill-modal-body th { background: var(--bg); color: var(--text-muted); font-weight: 600; }
+.skill-modal-body strong { color: var(--text); font-weight: 600; }
+.skill-modal-body a { color: var(--accent); }
+.skill-modal-body hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
 /* Loading */
 .loading {
   display: flex;
@@ -719,13 +808,12 @@ a.type-link.syn-type:hover, a.type-link.syn-func:hover { text-decoration-style: 
   <header class="header">
     <div class="logo" onclick="navigate('#/')"><img src="logo.svg" alt="" style="height:20px;vertical-align:middle;margin-right:4px"> The <span class="accent">Inspectoor</span></div>
     <div class="nav-tabs" id="nav-tabs">
-      <button class="nav-tab" data-route="#/" onclick="navigate('#/')">Specs</button>
+      <button class="nav-tab" data-route="#/" onclick="navigate('#/')">Home</button>
       <button class="nav-tab" data-route="#/types" onclick="navigate('#/types')">Types</button>
       <button class="nav-tab" data-route="#/endpoints" onclick="navigate('#/endpoints')">Endpoints</button>
       <button class="nav-tab" data-route="#/diff" onclick="navigate('#/diff')">Diff</button>
       <button class="nav-tab" data-route="#/prs" onclick="navigate('#/prs')">PRs</button>
       <button class="nav-tab" onclick="window.location='visualizer.html'">Visualizer</button>
-      <button class="nav-tab" onclick="window.location='about.html'">About</button>
     </div>
     <div class="search-box">
       <input type="text" id="search-input" placeholder="Search types, endpoints...  (/ to focus, Esc to clear)" oninput="onSearchInput(this.value)">
@@ -742,6 +830,23 @@ a.type-link.syn-type:hover, a.type-link.syn-func:hover { text-decoration-style: 
     </div>
   </div>
   <footer class="footer">Built by <a href="https://github.com/JasonVranek" target="_blank" rel="noopener">JasonVranek</a> · <a href="https://github.com/JasonVranek/inspectoor" target="_blank" rel="noopener">Source on GitHub</a></footer>
+
+  <!-- Skill Modal -->
+  <div class="skill-modal-overlay" id="skill-modal" onclick="if(event.target===this)closeSkillModal()">
+    <div class="skill-modal">
+      <div class="skill-modal-header">
+        <span class="skill-modal-title">Inspectoor MCP Skill</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="skill-btn skill-btn-copy" onclick="copySkill(this)" style="font-size:12px;padding:4px 10px">Copy Raw</button>
+          <a href="https://github.com/JasonVranek/inspectoor/blob/main/docs/SKILL.md" target="_blank" rel="noopener" class="skill-btn" style="font-size:12px;padding:4px 10px;text-decoration:none;color:var(--text)">Edit on GitHub</a>
+          <button class="skill-modal-close" onclick="closeSkillModal()">&times;</button>
+        </div>
+      </div>
+      <div class="skill-modal-body" id="skill-modal-body">
+        <div style="color:var(--text-dim);padding:20px;text-align:center">Loading...</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1049,8 +1154,13 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
-  // Escape: cycle through blur -> clear -> back
+  // Escape: close skill modal -> blur -> clear -> back
   if (e.key === 'Escape') {
+    const skillModal = document.getElementById('skill-modal');
+    if (skillModal && skillModal.classList.contains('open')) {
+      closeSkillModal();
+      return;
+    }
     if (isTyping) {
       searchInput.blur();
     } else if (searchQuery) {
@@ -1242,8 +1352,10 @@ function renderSpecsOverview(container) {
   }
 
   let html = '<div class="panel-full">';
-  html += '<h1 style="font-size:24px;margin-bottom:16px;font-family:var(--font-mono)"><img src="logo.svg" alt="" style="height:28px;vertical-align:middle;margin-right:6px"> The <span style="color:var(--accent)">Inspectoor</span></h1>';
-  html += '<p style="color:var(--text-muted);margin-bottom:20px;font-size:14px">Explore all Ethereum specification types, endpoints, constants, and forks across every spec repo.</p>';
+
+  // Hero
+  html += '<h1 style="font-size:24px;margin-bottom:8px;font-family:var(--font-mono)"><img src="logo.svg" alt="" style="height:28px;vertical-align:middle;margin-right:6px"> The <span style="color:var(--accent)">Inspectoor</span></h1>';
+  html += '<p style="color:var(--text-muted);margin-bottom:20px;font-size:14px">Deterministic extraction and exploration of all Ethereum specification data.</p>';
 
   // Stats bar
   html += '<div class="overview-stats">';
@@ -1253,7 +1365,6 @@ function renderSpecsOverview(container) {
   html += '<div class="overview-stat"><div class="val">' + totalConst + '</div><div class="label">Constants</div></div>';
   html += '<div class="overview-stat"><div class="val">' + totalAliases + '</div><div class="label">Type Aliases</div></div>';
   html += '</div>';
-
 
   const SPEC_DESC = {
     'consensus-specs': 'The core protocol: fork choice, state transitions, validator duties, and the beacon chain mechanics that keep Ethereum in consensus.',
@@ -1265,7 +1376,7 @@ function renderSpecsOverview(container) {
     'remote-signing-api': 'The API for delegating validator signing to a remote signer (Web3Signer, Dirk). Keeps keys off the beacon node.'
   };
 
-  // Cards
+  // Spec Cards
   html += '<div class="cards-grid">';
   for (const [specName, specData] of Object.entries(catalog.specs)) {
     const m = specData.meta || {};
@@ -1287,7 +1398,68 @@ function renderSpecsOverview(container) {
     }
     html += '</div>';
   }
+  html += '</div>';
+
+  // MCP Server
+  html += '<div class="home-section">';
+  html += '<h2>MCP Server</h2>';
+  html += '<p>The Inspectoor includes a Model Context Protocol (MCP) server so AI agents (Claude, Cursor, Windsurf, etc.) can query Ethereum spec data programmatically. Connect it to any MCP-compatible client and your agent gets direct access to the full spec index.</p>';
+  html += '<div class="tool-grid">';
+  var tools = [
+    ['lookup_type', 'Get full definition of a type by name and fork'],
+    ['diff_type', 'Compare a type between two forks'],
+    ['what_changed', 'List all type changes between two forks'],
+    ['search', 'Full-text search across all specs and types'],
+    ['trace_type', 'Get the full dependency tree of a type'],
+    ['lookup_endpoint', 'Get details of an API endpoint by path'],
+    ['list_specs', 'List all indexed spec repos and their forks'],
+    ['list_prs', 'List open PRs indexed against spec repos'],
+    ['index_pr', 'Index a specific PR to see what it changes']
+  ];
+  tools.forEach(function(t) {
+    html += '<div class="tool-item"><div class="tool-name">' + t[0] + '</div><div class="tool-desc">' + t[1] + '</div></div>';
+  });
   html += '</div></div>';
+
+  // Setup
+  html += '<div class="home-section">';
+  html += '<h2>Setup</h2>';
+  html += '<p>Requires Python 3.10+ and git. One command builds everything.</p>';
+  html += '<pre>git clone https://github.com/JasonVranek/inspectoor\ncd inspectoor\n\n# Install dependencies\npip install pyyaml mcp\n\n# Build everything: clones all 7 spec repos, extracts, links, builds catalog\npython3 build.py --all\n\n# Open the explorer\nopen docs/index.html</pre>';
+  html += '<p>That\'s it. <code>build.py --all</code> clones all spec repos to <code>./repos/specs/</code>, builds per-spec indexes, runs cross-reference linking, and assembles the catalog. First run takes a few minutes to clone. Subsequent runs pull updates and rebuild.</p>';
+  html += '<h3>MCP Server</h3>';
+  html += '<p>Start the MCP server for AI agent integration:</p>';
+  html += '<pre># Start the server (stdio transport)\npython3 server.py --catalog docs/catalog.json</pre>';
+  html += '<p>For MCP client configuration (Claude Desktop, Hermes, Cursor), add to your config:</p>';
+  html += '<pre>mcp:\n  inspectoor:\n    command: "uv"\n    args:\n      - "run"\n      - "--with"\n      - "mcp"\n      - "--with"\n      - "pyyaml"\n      - "python3"\n      - "/path/to/inspectoor/server.py"\n      - "--catalog"\n      - "/path/to/inspectoor/docs/catalog.json"</pre>';
+  html += '<h3>Including PR Data</h3>';
+  html += '<p>To track open pull requests against spec repos (requires a <code>GITHUB_TOKEN</code>):</p>';
+  html += '<pre>GITHUB_TOKEN=*** python3 build.py --all --include-prs</pre>';
+  html += '</div>';
+
+  // Agent Skill
+  html += '<div class="home-section">';
+  html += '<h2>Agent Skill</h2>';
+  html += '<p>Teach your AI agent how to use the Inspectoor MCP effectively. This skill document covers tool workflows, query patterns, and the mental model for navigating Ethereum specs.</p>';
+  html += '<div class="skill-card"><div class="skill-card-header"><div>';
+  html += '<div class="skill-card-title">Inspectoor MCP Skill</div>';
+  html += '<div class="skill-card-desc">Complete guide for AI agents: 10 tools, 5 workflow patterns, spec navigation tips</div>';
+  html += '</div><div class="skill-card-actions">';
+  html += '<button class="skill-btn" onclick="viewSkill()">View</button>';
+  html += '<button class="skill-btn skill-btn-copy" onclick="copySkill(this)">Copy to Clipboard</button>';
+  html += '</div></div></div>';
+  html += '</div>';
+
+  // GitHub link
+  html += '<div class="home-section">';
+  html += '<h2>Source</h2>';
+  html += '<a class="home-github-link" href="https://github.com/JasonVranek/inspectoor" target="_blank" rel="noopener">';
+  html += '<svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>';
+  html += 'github.com/JasonVranek/inspectoor';
+  html += '</a>';
+  html += '</div>';
+
+  html += '</div>';
   container.innerHTML = html;
 }
 
@@ -2855,6 +3027,79 @@ function navigateDiff(spec, from, to) {
   if (to !== null) params.to = to;
   let qs = Object.entries(params).map(([k,v]) => k + '=' + encodeURIComponent(v)).join('&');
   navigate('#/diff?' + qs);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SKILL MODAL
+   ══════════════════════════════════════════════════════════════ */
+let skillMdRaw = null;
+
+async function fetchSkillMd() {
+  if (skillMdRaw) return skillMdRaw;
+  const resp = await fetch('SKILL.md');
+  if (!resp.ok) throw new Error('Failed to load SKILL.md');
+  skillMdRaw = await resp.text();
+  return skillMdRaw;
+}
+
+function renderMarkdown(md) {
+  let html = md;
+  html = html.replace(/```([\s\S]*?)```/g, function(m, code) {
+    return '<pre><code>' + code.replace(/^\w*\n/, '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</code></pre>';
+  });
+  html = html.replace(/(\|.+\|\n)(\|[-| :]+\|\n)((?:\|.+\|\n?)+)/g, function(m, header, sep, body) {
+    var t = '<table><thead><tr>';
+    header.trim().split('|').filter(Boolean).forEach(function(c) { t += '<th>' + c.trim() + '</th>'; });
+    t += '</tr></thead><tbody>';
+    body.trim().split('\n').forEach(function(row) {
+      t += '<tr>';
+      row.split('|').filter(Boolean).forEach(function(c) { t += '<td>' + c.trim() + '</td>'; });
+      t += '</tr>';
+    });
+    t += '</tbody></table>';
+    return t;
+  });
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+  html = html.replace(/^---+$/gm, '<hr>');
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+  html = html.replace(/^(?!<[hupltao]|$)(.+)$/gm, '<p>$1</p>');
+  html = html.replace(/\n{2,}/g, '\n');
+  return html;
+}
+
+async function viewSkill() {
+  try {
+    const md = await fetchSkillMd();
+    document.getElementById('skill-modal-body').innerHTML = renderMarkdown(md);
+    document.getElementById('skill-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  } catch (e) {
+    alert('Could not load SKILL.md: ' + e.message);
+  }
+}
+
+function closeSkillModal() {
+  document.getElementById('skill-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function copySkill(btn) {
+  try {
+    const md = await fetchSkillMd();
+    await navigator.clipboard.writeText(md);
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(function() { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+  } catch (e) {
+    alert('Copy failed: ' + e.message);
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
