@@ -5,6 +5,11 @@ every spec repo (consensus, execution, builder, relay, beacon APIs, execution
 APIs, remote signing) into structured indexes, then serves them over MCP and a
 static explorer UI.
 
+> **Inspired by [ethspec.tools](https://ethspec.tools)** — a beautifully crafted
+> spec explorer that showed us what's possible when protocol data is made
+> approachable. The Ethspectoor builds on that vision with deterministic
+> extraction, cross-spec linking, and MCP-native access.
+
 **1,083 types, 168 endpoints, 355 constants, 47 type aliases across 7 specs.**
 
 ## Live Explorer
@@ -88,6 +93,10 @@ python3 build.py --all
 # Open the explorer
 open docs/index.html
 
+# Or serve locally (avoids CORS when fetching catalog.json)
+python3 -m http.server 8080 -d docs
+# then visit http://localhost:8080
+
 # Start the MCP server
 python3 server.py --catalog docs/catalog.json
 ```
@@ -97,7 +106,7 @@ building per-spec indexes, cross-reference linking, and assembling the
 final `catalog.json`. First run takes a few minutes to clone; subsequent
 runs pull updates and rebuild.
 
-To include PR overlays (requires `GITHUB_TOKEN`):
+To include PR overlays:
 
 ```bash
 python3 build.py --all --include-prs
@@ -208,7 +217,7 @@ python3 pr_index.py --spec consensus-specs --cleanup
 python3 pr_index.py --list
 ```
 
-Requires `GITHUB_TOKEN` env var or `--github-token` for API access.
+
 
 ### Querying PR Data via MCP
 

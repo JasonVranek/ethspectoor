@@ -31,6 +31,8 @@
 
   <p>The Ethspectoor parses every Ethereum spec repo and builds a structured index of types, endpoints, constants, presets, and containers. It tracks changes across forks, diffs fields between versions, and makes everything searchable through a browser UI and an MCP server for AI agents.</p>
 
+  <p style="margin-bottom:20px"><a href="https://ethspec.tools" target="_blank" rel="noopener" style="color:var(--accent)">Shoutout to ethspec.tools</a></p>
+
   <h2>Indexed Specifications</h2>
   <div class="spec-list">
     <span class="spec-tag">consensus-specs</span>
@@ -129,7 +131,11 @@ pip install pyyaml mcp
 python3 build.py --all
 
 # Open the explorer
-open docs/index.html</pre>
+open docs/index.html
+
+# Or serve locally (avoids CORS when fetching catalog.json)
+python3 -m http.server 8080 -d docs
+# then visit http://localhost:8080</pre>
 
   <p>That's it. <code>build.py --all</code> clones all spec repos to <code>./repos/specs/</code>,
   builds per-spec indexes, runs cross-reference linking, and assembles the catalog.
@@ -156,8 +162,8 @@ python3 server.py --catalog docs/catalog.json</pre>
       - "/path/to/ethspectoor/docs/catalog.json"</pre>
 
   <h3>Including PR Data</h3>
-  <p>To track open pull requests against spec repos (requires a <code>GITHUB_TOKEN</code>):</p>
-  <pre>GITHUB_TOKEN=your_token python3 build.py --all --include-prs</pre>
+  <p>To track open pull requests against spec repos:</p>
+  <pre>python3 build.py --all --include-prs</pre>
 
 
   <h2>Agent Skill</h2>

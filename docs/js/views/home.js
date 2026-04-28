@@ -16,7 +16,8 @@ export function renderSpecsOverview(container) {
 
   // Hero
   html += '<h1 style="font-size:24px;margin-bottom:8px;font-family:var(--font-mono)"><img src="logo.svg" alt="" style="height:28px;vertical-align:middle;margin-right:6px"> The <span style="color:var(--accent)">Ethspectoor</span></h1>';
-  html += '<p style="color:var(--text-muted);margin-bottom:20px;font-size:14px">Deterministic extraction and exploration of all Ethereum specification data.</p>';
+  html += '<p style="color:var(--text-muted);margin-bottom:8px;font-size:14px">Deterministic extraction and exploration of all Ethereum specification data.</p>';
+  html += '<p style="color:var(--text-muted);margin-bottom:20px;font-size:13px"><a href="https://ethspec.tools" target="_blank" rel="noopener" style="color:var(--accent)">Shoutout to ethspec.tools</a></p>';
 
   // Stats bar
   html += '<div class="overview-stats">';
@@ -98,8 +99,8 @@ export function renderSpecsOverview(container) {
   html += '<p>For MCP client configuration (Claude Desktop, Hermes, Cursor), add to your config:</p>';
   html += '<pre>mcp:\n  ethspectoor:\n    command: "uv"\n    args:\n      - "run"\n      - "--with"\n      - "mcp"\n      - "--with"\n      - "pyyaml"\n      - "python3"\n      - "/path/to/ethspectoor/server.py"\n      - "--catalog"\n      - "/path/to/ethspectoor/docs/catalog.json"</pre>';
   html += '<h3>Including PR Data</h3>';
-  html += '<p>To track open pull requests against spec repos (requires a <code>GITHUB_TOKEN</code>):</p>';
-  html += '<pre>GITHUB_TOKEN=*** python3 build.py --all --include-prs</pre>';
+  html += '<p>To track open pull requests against spec repos:</p>';
+  html += '<pre>python3 build.py --all --include-prs</pre>';
   html += '</div>';
 
   // Agent Skill
