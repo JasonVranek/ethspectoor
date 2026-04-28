@@ -62,60 +62,123 @@ export function githubBtn(url, id) {
 export function highlightPython(code) {
   if (!code) return '';
   const KW = /\b(class|def|return|if|else|elif|for|while|in|not|and|or|is|assert|raise|import|from|as|with|yield|pass|break|continue|try|except|finally|True|False|None|lambda)\b/g;
-  const BUILTIN = /\b(uint64|uint8|uint16|uint32|uint128|uint256|Bytes|Bytes1|Bytes4|Bytes8|Bytes20|Bytes32|Bytes48|Bytes96|Bytes256|byte|bool|int|str|list|dict|tuple|set|List|Vector|Bitlist|Bitvector|ByteList|ByteVector|Container|StableContainer|Profile|Union|GeneralizedIndex|Optional)\b/g;
+  const BUILTIN = /\b(uint64|uint8|uint16|uint32|uint128|uint256|Bytes|Bytes1|Bytes4|Bytes8|Bytes20|Bytes32|Bytes48|Bytes96|Bytes256|byte|bool|int|str|list|dict|tuple|set|List|Vector|Bitlist|Bitvector|ByteList|ByteVector|Container|StableContainer|Profile|Union|GeneralizedIndex|Optional|range|len|max|min|sum|enumerate|zip|map|filter|sorted|reversed|abs|round|divmod|pow|hex|bin|oct|chr|ord|repr|hash|id|isinstance|hasattr|getattr|setattr|delattr|vars|locals|globals|type|property|classmethod|staticmethod|super|print|input|open|all|any|callable|compile|eval|exec|format|help|dir|slice|iter|next|memoryview|bytearray|bytes|frozenset|object|complex|float)\b/g;
   const catalog = state.catalog;
+
+  // Triple-quoted string handling (works across lines)
+  let inDocstring = false;
+  let docstringQuote = '';
+
   return code.split('\n').map(line => {
     let escaped = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    let inStr = null, commentIdx = -1;
-    for (let i = 0; i < escaped.length; i++) {
-      const ch = escaped[i];
-      if (inStr) { if (ch === '\\') { i++; continue; } if (ch === inStr) inStr = null; }
-      else { if (ch === '"' || ch === "'") inStr = ch; else if (ch === '#') { commentIdx = i; break; } }
-    }
-    let codePart, commentPart;
-    if (commentIdx >= 0) {
-      codePart = escaped.slice(0, commentIdx);
-      const rawComment = escaped.slice(commentIdx);
-      commentPart = '<span class="syn-comment">' +
-        rawComment
-          .replace(/(\[New in [^\]]+\])/g, '<span class="syn-new-marker">$1</span>')
-          .replace(/(\[Modified in [^\]]+\])/g, '<span class="syn-mod-marker">$1</span>') +
-        '</span>';
-    } else {
-      codePart = escaped;
-      commentPart = '';
-    }
-    function linkifyCode(seg) {
-      let result = seg.replace(KW, '<span class="syn-keyword">$1</span>');
-      result = result.replace(BUILTIN, '<span class="syn-builtin">$1</span>');
-      if (catalog) {
-        const parts = result.split(/(<span[^>]*>.*?<\/span>|<a[^>]*>.*?<\/a>)/g);
-        result = parts.map(part => {
-          if (part.startsWith('<span') || part.startsWith('<a')) return part;
-          return part.replace(/\b([A-Za-z_][A-Za-z0-9_]*)\b/g, (match) => {
-            const it = catalog.items[match];
-            if (it) {
-              const kind = it.kind;
-              const cls = (kind === 'class' || kind === 'dataclass') ? 'syn-type' : 'syn-func';
-              return '<a class="type-link ' + cls + '" href="#/type/' + encodeURIComponent(match) + '">' + match + '</a>';
-            }
-            const s = resolveTypeSpec(match);
-            if (s) return '<a class="type-link syn-type" href="#/type/' + encodeURIComponent(match) + '">' + match + '</a>';
-            return match;
-          });
-        }).join('');
+
+    // If we're inside a triple-quoted string, check if it ends on this line
+    if (inDocstring) {
+      const endIdx = escaped.indexOf(docstringQuote);
+      if (endIdx !== -1) {
+        const before = escaped.slice(0, endIdx);
+        const quote = escaped.slice(endIdx, endIdx + 3);
+        const after = escaped.slice(endIdx + 3);
+        inDocstring = false;
+        return '<span class="syn-string">' + before + quote + '</span>' + processLine(after, true);
       }
-      return result;
+      return '<span class="syn-string">' + escaped + '</span>';
     }
-    const strRe = /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g;
-    let processed = '', lastIdx = 0, m;
-    while ((m = strRe.exec(codePart)) !== null) {
-      processed += linkifyCode(codePart.slice(lastIdx, m.index));
-      processed += '<span class="syn-string">' + m[0] + '</span>';
-      lastIdx = m.index + m[0].length;
+
+    // Check if this line starts a triple-quoted string
+    const tripleDouble = escaped.indexOf('\"\"\"');
+    const tripleSingle = escaped.indexOf("'''");
+    let tripleIdx = -1, tripleQuote = '';
+    if (tripleDouble !== -1 && (tripleSingle === -1 || tripleDouble < tripleSingle)) {
+      tripleIdx = tripleDouble;
+      tripleQuote = '\"\"\"';
+    } else if (tripleSingle !== -1) {
+      tripleIdx = tripleSingle;
+      tripleQuote = "'''";
     }
-    processed += linkifyCode(codePart.slice(lastIdx));
-    processed = processed.replace(/^(\s*)(@\w+)/, '$1<span class="syn-decorator">$2</span>');
-    return processed + commentPart;
+
+    if (tripleIdx !== -1) {
+      const afterQuote = escaped.slice(tripleIdx + 3);
+      const endIdx = afterQuote.indexOf(tripleQuote);
+      if (endIdx !== -1) {
+        // Triple-quoted string starts and ends on the same line
+        const before = escaped.slice(0, tripleIdx);
+        const content = afterQuote.slice(0, endIdx);
+        const closeQuote = tripleQuote;
+        const rest = afterQuote.slice(endIdx + 3);
+        return processLine(before, true) +
+          '<span class="syn-string">' + tripleQuote + content + closeQuote + '</span>' +
+          processLine(rest, true);
+      } else {
+        // Triple-quoted string starts but doesn't end
+        inDocstring = true;
+        docstringQuote = tripleQuote;
+        const before = escaped.slice(0, tripleIdx);
+        return processLine(before, true) + '<span class="syn-string">' + tripleQuote + afterQuote + '</span>';
+      }
+    }
+
+    return processLine(escaped, false);
+
+    function processLine(text, skipComment) {
+      let codePart, commentPart;
+      if (!skipComment) {
+        let inStr = null, commentIdx = -1;
+        for (let i = 0; i < text.length; i++) {
+          const ch = text[i];
+          if (inStr) { if (ch === '\\') { i++; continue; } if (ch === inStr) inStr = null; }
+          else { if (ch === '"' || ch === "'") inStr = ch; else if (ch === '#') { commentIdx = i; break; } }
+        }
+        if (commentIdx >= 0) {
+          codePart = text.slice(0, commentIdx);
+          const rawComment = text.slice(commentIdx);
+          commentPart = '<span class="syn-comment">' +
+            rawComment
+              .replace(/(\[New in [^\]]+\])/g, '<span class="syn-new-marker">$1</span>')
+              .replace(/(\[Modified in [^\]]+\])/g, '<span class="syn-mod-marker">$1</span>') +
+            '</span>';
+        } else {
+          codePart = text;
+          commentPart = '';
+        }
+      } else {
+        codePart = text;
+        commentPart = '';
+      }
+
+      function linkifyCode(seg) {
+        let result = seg.replace(KW, '<span class="syn-keyword">$1</span>');
+        result = result.replace(BUILTIN, '<span class="syn-builtin">$1</span>');
+        if (catalog) {
+          const parts = result.split(/(<span[^>]*>.*?<\/span>|<a[^>]*>.*?<\/a>)/g);
+          result = parts.map(part => {
+            if (part.startsWith('<span') || part.startsWith('<a')) return part;
+            return part.replace(/\b([A-Za-z_][A-Za-z0-9_]*)\b/g, (match) => {
+              const it = catalog.items[match];
+              if (it) {
+                const kind = it.kind;
+                const cls = (kind === 'class' || kind === 'dataclass') ? 'syn-type' : 'syn-func';
+                return '<a class="type-link ' + cls + '" href="#/type/' + encodeURIComponent(match) + '">' + match + '</a>';
+              }
+              const s = resolveTypeSpec(match);
+              if (s) return '<a class="type-link syn-type" href="#/type/' + encodeURIComponent(match) + '">' + match + '</a>';
+              return match;
+            });
+          }).join('');
+        }
+        return result;
+      }
+
+      const strRe = /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g;
+      let processed = '', lastIdx = 0, m;
+      while ((m = strRe.exec(codePart)) !== null) {
+        processed += linkifyCode(codePart.slice(lastIdx, m.index));
+        processed += '<span class="syn-string">' + m[0] + '</span>';
+        lastIdx = m.index + m[0].length;
+      }
+      processed += linkifyCode(codePart.slice(lastIdx));
+      processed = processed.replace(/^(\s*)(@\w+)/, '$1<span class="syn-decorator">$2</span>');
+      return processed + commentPart;
+    }
   }).join('\n');
 }
